@@ -1,8 +1,8 @@
 use std::string::String;
 
 fn add_spaces_between_tags(text: String) -> String {
-    return text.replace("</blockquote>", "</blockquote>\n")
-        .replace("<img ", "\n<img ")
+    return text.replace("<img ", "\n<img ")
+        .replace("</blockquote>", "</blockquote>\n")
         .replace("</li>", "</li>\n")
         .replace("</p>", "</p>\n")
         .replace("><", "> <");
