@@ -3,11 +3,13 @@ extern crate select;
 use std::string::String;
 
 pub mod text;
+//pub mod content;
 
 pub mod extractor {
     use select::document::Document;
 
     use crate::extractor::text::{DualTagBasedExtractor, MetaBasedExtractor, TagBasedExtractor, TextExtractor};
+    use super::select::node::Node;
 
     fn get_text_from_extractors(document: Document, text_extractors: Box<[Box<TextExtractor>]>) -> String {
         for text_extractor in text_extractors.iter() {
@@ -20,8 +22,7 @@ pub mod extractor {
         return String::new();
     }
 
-
-    pub fn get_title(document: Document) -> String {
+    pub fn get_raw_title(document: Document) -> String {
         let title_extractors: Box<[Box<TextExtractor>; 3]> = Box::new([
             Box::new(TagBasedExtractor { tag: "title" }),
             Box::new(MetaBasedExtractor { attr: "property", value: "og:title" }),
@@ -30,6 +31,9 @@ pub mod extractor {
         return get_text_from_extractors(document, title_extractors);
     }
 
+    pub fn get_title(document: Document) -> String {
+        return get_raw_title(document);
+    }
 
     #[cfg(test)]
     mod tests {

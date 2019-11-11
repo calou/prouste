@@ -1,18 +1,19 @@
-extern crate select;
 extern crate encoding;
+extern crate select;
 
 use std::string::String;
 
+use encoding::all::UTF_8;
+use encoding::label::encoding_from_whatwg_label;
 use select::document::Document;
 use select::predicate::{Attr, Name};
 
+use crate::article::Article;
 use crate::charset::charset;
 
-use self::select::predicate::Predicate;
-use encoding::label::encoding_from_whatwg_label;
-use encoding::all::UTF_8;
 use self::encoding::{DecoderTrap, EncoderTrap, Encoding};
-
+use self::select::predicate::Predicate;
+use crate::extractor::extractor::get_title;
 
 pub fn add_spaces_between_tags(text: String) -> String {
     return text.replace("<img ", "\n<img ")
@@ -80,10 +81,24 @@ pub fn pre_process(raw_html: String) -> Option<Document> {
     return Some(document);
 }
 
+fn crawl(raw_html: String) -> (Article, String) {
+    let option = pre_process(raw_html);
+    return match option {
+        Some(html) => {
+            let document = Document::from(html);
+            let mut article = Article::new();
+            article.title = get_title(document);
+            return (article, String::new());
+        },
+        _ => (Article::new(), String::from("Impossible to pre-process html"))
+    };
+}
 
 #[cfg(test)]
 mod tests {
     use std::string::String;
+    use std::fs;
+    use crate::article::Article;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
@@ -116,5 +131,15 @@ mod tests {
     fn test_get_charset() {
         assert_eq!(get_charset(Document::from("<html><head><meta charset=\"UTF8\"></head></html>")), "UTF-8");
         assert_eq!(get_charset(Document::from("<html><head><meta test=\"\"><meta charset=\"dummy\"></head></html>")), "DUMMY");
+    }
+
+
+    #[test]
+    fn test_crawl() {
+        let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
+            .expect("Something went wrong reading the file");
+
+        let (article, _) = crawl(raw_html);
+        assert_eq!(article.title, "New Jersey Devils Owner Apologizes After Landing Helicopter in Middle of Kids' Soccer Game Forces Cancellation - ABC News");
     }
 }
