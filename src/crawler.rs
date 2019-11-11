@@ -46,15 +46,14 @@ pub fn get_charset_from_content_type(content_type: String) -> String {
 
 // GetCharset returns a normalised charset string extracted from the meta tags
 pub fn get_charset(document: Document) -> String {
-    let clone = document.clone();
-    let ct = get_content_type(document);
+    let ct = get_content_type(document.to_owned());
 
     if "" != ct && ct.to_ascii_lowercase().contains("charset") {
         return get_charset_from_content_type(ct);
     }
 
     // <meta charset="utf-8">
-    for node in clone.find(Name("meta")) {
+    for node in document.find(Name("meta")) {
         if node.attr("charset").is_some() {
             return charset::normalize(node.attr("charset").unwrap());
         }
