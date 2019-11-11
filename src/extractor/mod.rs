@@ -1,20 +1,22 @@
-pub mod title;
-pub mod text;
-
 extern crate select;
 
 use std::string::String;
 
+pub mod text;
+
 pub mod extractor {
     use select::document::Document;
-    use crate::extractor::text::TextExtractor;
-    use crate::extractor::title::TitleTagExtractor;
 
+    use crate::extractor::text::{MetaBasedExtractor, TagBasedExtractor, TextExtractor};
 
     pub fn get_title(document: Document) -> String {
-        let text_extractors = [ TitleTagExtractor ];
-        for text_extractor in &text_extractors {
-            let text_extraction = text_extractor.extract(document.to_owned());
+        let title_tag_extractor = Box::new(TagBasedExtractor { tag: "title" });
+        let meta_og_title_extractor = Box::new(MetaBasedExtractor { attr: "property", value:"og:title" });
+
+        let text_extractors: [Box<TextExtractor>;2] = [title_tag_extractor, meta_og_title_extractor];
+        for text_extractor in text_extractors.iter() {
+            let extr = &**text_extractor;
+            let text_extraction = extr.extract(document.to_owned());
             if text_extraction.successful {
                 return text_extraction.text;
             }
@@ -26,6 +28,7 @@ pub mod extractor {
     #[cfg(test)]
     mod tests {
         use std::string::String;
+
         use super::*;
 
         #[test]

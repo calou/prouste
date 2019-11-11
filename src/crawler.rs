@@ -39,9 +39,8 @@ pub fn get_charset_from_content_type(content_type: String) -> String {
     let idx = cs.find("charset=");
     match idx {
         Some(i) => { return charset::normalize(cs.get(i + "charset=".len()..).unwrap()); }
-        _ => { return String::new(); }
+        _ => { return cs; }
     }
-    return cs;
 }
 
 // GetCharset returns a normalised charset string extracted from the meta tags
@@ -68,16 +67,15 @@ pub fn pre_process(raw_html: String) -> Option<Document> {
         return None;
     }
     let sanitized_html = add_spaces_between_tags(raw_html);
-    let document = Document::from(sanitized_html.to_owned().as_str());
+    let mut document = Document::from(sanitized_html.to_owned().as_str());
     let cs = get_charset(document.to_owned());
     if "" != cs && "UTF-8" != cs {
         // the net/html parser and goquery require UTF-8 data
         let encoding = encoding_from_whatwg_label(cs.as_str()).unwrap();
 
         let result = encoding.encode(sanitized_html.as_str(), EncoderTrap::Ignore);
-        let mut chars = String::new();
         let reencoded_html = UTF_8.decode(&result.unwrap(), DecoderTrap::Ignore).unwrap();
-        let document = Document::from(reencoded_html.as_str());
+        document = Document::from(reencoded_html.as_str());
     }
     return Some(document);
 }
