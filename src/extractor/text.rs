@@ -37,6 +37,31 @@ impl TextExtractor for TagBasedExtractor {
 }
 
 #[derive(Debug)]
+pub struct DualTagBasedExtractor {
+    pub tag1: &'static str,
+    pub tag2: &'static str,
+}
+
+impl DualTagBasedExtractor {
+    fn extract_tag_text(&self, document: Document) -> String {
+        return match document.to_owned().find(Name(self.tag1).or(Name(self.tag2))).next() {
+            Some(node) => node.text(),
+            _ => String::new()
+        };
+    }
+}
+
+impl TextExtractor for DualTagBasedExtractor {
+    fn extract(&self, document: Document) -> TextExtraction {
+        let text = self.extract_tag_text(document);
+        return TextExtraction {
+            successful: text != "",
+            text,
+        };
+    }
+}
+
+#[derive(Debug)]
 pub struct MetaBasedExtractor {
     pub attr: &'static str,
     pub value: &'static str,
@@ -87,7 +112,6 @@ mod tests {
         assert!(!extraction.successful);
     }
 
-
     #[test]
     fn extract_with_og_abcnews() {
         let document = Document::from(include_str!("sites/abcnews.go.com.html"));
@@ -95,5 +119,14 @@ mod tests {
         let extraction = extractor.extract(document);
         assert!(extraction.successful);
         assert_eq!(extraction.text, "NHL Owner Apologizes for Landing Helicopter at Kids' Soccer Game");
+    }
+
+    #[test]
+    fn extract_with_multitags_abcnews() {
+        let document = Document::from("<html><b>B first value</b><a>A first value</a><b>B second value</b></html>");
+        let extractor = DualTagBasedExtractor { tag1: "a", tag2: "b" };
+        let extraction = extractor.extract(document);
+        assert!(extraction.successful);
+        assert_eq!(extraction.text, "B first value");
     }
 }

@@ -7,13 +7,9 @@ pub mod text;
 pub mod extractor {
     use select::document::Document;
 
-    use crate::extractor::text::{MetaBasedExtractor, TagBasedExtractor, TextExtractor};
+    use crate::extractor::text::{DualTagBasedExtractor, MetaBasedExtractor, TagBasedExtractor, TextExtractor};
 
-    pub fn get_title(document: Document) -> String {
-        let title_tag_extractor = Box::new(TagBasedExtractor { tag: "title" });
-        let meta_og_title_extractor = Box::new(MetaBasedExtractor { attr: "property", value:"og:title" });
-
-        let text_extractors: [Box<TextExtractor>;2] = [title_tag_extractor, meta_og_title_extractor];
+    fn get_text_from_extractors(document: Document, text_extractors: Box<[Box<TextExtractor>]>) -> String {
         for text_extractor in text_extractors.iter() {
             let extr = &**text_extractor;
             let text_extraction = extr.extract(document.to_owned());
@@ -22,6 +18,16 @@ pub mod extractor {
             }
         }
         return String::new();
+    }
+
+
+    pub fn get_title(document: Document) -> String {
+        let title_extractors: Box<[Box<TextExtractor>; 3]> = Box::new([
+            Box::new(TagBasedExtractor { tag: "title" }),
+            Box::new(MetaBasedExtractor { attr: "property", value: "og:title" }),
+            Box::new(DualTagBasedExtractor { tag1: "post-title", tag2: "headline" }),
+        ]);
+        return get_text_from_extractors(document, title_extractors);
     }
 
 
