@@ -1,4 +1,5 @@
 extern crate select;
+extern crate encoding;
 
 use std::string::String;
 
@@ -8,6 +9,10 @@ use select::predicate::{Attr, Name};
 use crate::charset::charset;
 
 use self::select::predicate::Predicate;
+use encoding::label::encoding_from_whatwg_label;
+use encoding::all::UTF_8;
+use self::encoding::{DecoderTrap, EncoderTrap, Encoding};
+
 
 pub fn add_spaces_between_tags(text: String) -> String {
     return text.replace("<img ", "\n<img ")
@@ -55,6 +60,27 @@ pub fn get_charset(document: Document) -> String {
         }
     }
     return String::new();
+}
+
+// Preprocess fetches the HTML page if needed, converts it to UTF-8 and applies
+// some text normalisation to guarantee better results when extracting the content
+pub fn pre_process(raw_html: String) -> Option<Document> {
+    if raw_html == "" {
+        return None;
+    }
+    let sanitized_html = add_spaces_between_tags(raw_html);
+    let document = Document::from(sanitized_html.to_owned().as_str());
+    let cs = get_charset(document.to_owned());
+    if "" != cs && "UTF-8" != cs {
+        // the net/html parser and goquery require UTF-8 data
+        let encoding = encoding_from_whatwg_label(cs.as_str()).unwrap();
+
+        let result = encoding.encode(sanitized_html.as_str(), EncoderTrap::Ignore);
+        let mut chars = String::new();
+        let reencoded_html = UTF_8.decode(&result.unwrap(), DecoderTrap::Ignore).unwrap();
+        let document = Document::from(reencoded_html.as_str());
+    }
+    return Some(document);
 }
 
 
