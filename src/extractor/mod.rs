@@ -61,7 +61,7 @@ pub mod extractor {
     }
 
     pub fn get_canonical_link(document: &Document) -> String {
-        let extractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: "canonical" };
+        let extractor = LinkRelEqualsHrefBasedExtractor { attr: "rel", value: "canonical" };
         return get_text_from_single_extractor(document, Box::new(extractor));
     }
 

@@ -20,7 +20,7 @@ pub struct TagBasedExtractor {
 }
 impl TagBasedExtractor {
     fn extract_tag_text(&self, document: &Document) -> String {
-        return match document.to_owned().find(Name(self.tag)).next() {
+        return match document.find(Name(self.tag)).next() {
             Some(node) => node.text(),
             _ => String::new()
         };
@@ -43,7 +43,7 @@ pub struct DualTagBasedExtractor {
 }
 impl DualTagBasedExtractor {
     fn extract_tag_text(&self, document: &Document) -> String {
-        return match document.to_owned().find(Name(self.tag1).or(Name(self.tag2))).next() {
+        return match document.find(Name(self.tag1).or(Name(self.tag2))).next() {
             Some(node) => node.text(),
             _ => String::new()
         };
@@ -66,7 +66,7 @@ pub struct MetaBasedExtractor {
 }
 impl MetaBasedExtractor {
     fn extract_meta_content(&self, document: &Document) -> String {
-        return match document.to_owned().find(Name("meta").and(Attr(self.attr, self.value))).next() {
+        return match document.find(Name("meta").and(Attr(self.attr, self.value))).next() {
             Some(node) => String::from(node.attr("content").unwrap_or("")),
             _ => String::new()
         };
@@ -89,7 +89,7 @@ pub struct TagAttributeBasedExtractor {
 }
 impl TagAttributeBasedExtractor {
     fn extract_tag_attr(&self, document: &Document) -> String {
-        return match document.to_owned().find(Name(self.tag)).next() {
+        return match document.find(Name(self.tag)).next() {
             Some(node) => String::from(node.attr(self.attr).unwrap_or("")),
             _ => String::new()
         };
@@ -106,13 +106,37 @@ impl TextExtractor for TagAttributeBasedExtractor {
 }
 
 #[derive(Debug)]
+pub struct LinkRelEqualsHrefBasedExtractor {
+    pub attr: &'static str,
+    pub value: &'static str,
+}
+impl LinkRelEqualsHrefBasedExtractor {
+    fn extract_link_url(&self, document: &Document) -> String {
+        return match document.find(Name("link").and(Attr(self.attr, self.value))).next() {
+            Some(node) => String::from(node.attr("href").unwrap_or("")),
+            _ => String::new()
+        };
+    }
+}
+impl TextExtractor for LinkRelEqualsHrefBasedExtractor {
+    fn extract(&self, document: &Document) -> TextExtraction {
+        let text = self.extract_link_url(&document);
+        return TextExtraction {
+            successful: text != "",
+            text,
+        };
+    }
+}
+
+
+#[derive(Debug)]
 pub struct LinkRelContainsHrefBasedExtractor {
     pub attr: &'static str,
     pub value: &'static str,
 }
 impl LinkRelContainsHrefBasedExtractor {
     fn extract_link_url(&self, document: &Document) -> String {
-        return match document.to_owned().find(Name("link").and(AttrContains(self.attr, self.value))).next() {
+        return match document.find(Name("link").and(AttrContains(self.attr, self.value))).next() {
             Some(node) => String::from(node.attr("href").unwrap_or("")),
             _ => String::new()
         };
