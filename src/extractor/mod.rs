@@ -6,7 +6,8 @@ pub mod text;
 pub mod extractor {
     use select::document::Document;
 
-    use crate::extractor::text::{DualTagBasedExtractor, MetaBasedExtractor, TagBasedExtractor, TextExtractor};
+    use crate::extractor::text::{DualTagBasedExtractor, MetaBasedExtractor, TagBasedExtractor, TextExtractor, TagAttributeBasedExtractor};
+    use std::ops::Index;
 
     fn get_text_from_extractors(document: Document, text_extractors: Box<[Box<dyn TextExtractor>]>) -> String {
         for text_extractor in text_extractors.iter() {
@@ -32,6 +33,18 @@ pub mod extractor {
         return get_raw_title(document);
     }
 
+    pub fn get_meta_language(document: Document) -> String {
+        let meta_extractors: Box<[Box<dyn TextExtractor>; 2]> = Box::new([
+            Box::new(TagAttributeBasedExtractor { tag: "html", attr: "lang" }),
+            Box::new(MetaBasedExtractor { attr: "http-equiv", value: "content-language"  }),
+        ]);
+        let full_language = get_text_from_extractors(document, meta_extractors);
+        return match full_language.find("-"){
+            Some(idx) => String::from(&full_language[..idx]),
+            _ => full_language
+        };
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -40,6 +53,30 @@ pub mod extractor {
         fn test_get_title_abcnews() {
             let document = Document::from(include_str!("sites/abcnews.go.com.html"));
             assert_eq!(get_title(document), "New Jersey Devils Owner Apologizes After Landing Helicopter in Middle of Kids' Soccer Game Forces Cancellation - ABC News");
+        }
+
+        #[test]
+        fn test_get_meta_language_abcnews() {
+            let document = Document::from(include_str!("sites/abcnews.go.com.html"));
+            assert_eq!(get_meta_language(document), "en");
+        }
+
+        #[test]
+        fn test_get_meta_language_bbc() {
+            let document = Document::from(include_str!("sites/bbc.co.uk.html"));
+            assert_eq!(get_meta_language(document), "en");
+        }
+
+        #[test]
+        fn test_get_meta_language_huffington_jp() {
+            let document = Document::from(include_str!("sites/huffingtonpost.jp.html"));
+            assert_eq!(get_meta_language(document), "ja");
+        }
+
+        #[test]
+        fn test_get_meta_language_vnexpress() {
+            let document = Document::from(include_str!("sites/vnexpress.net.html"));
+            assert_eq!(get_meta_language(document), "vi");
         }
     }
 }

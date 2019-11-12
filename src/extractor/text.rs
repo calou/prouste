@@ -87,6 +87,32 @@ impl TextExtractor for MetaBasedExtractor {
 }
 
 
+#[derive(Debug)]
+pub struct TagAttributeBasedExtractor {
+    pub tag: &'static str,
+    pub attr: &'static str,
+}
+
+impl TagAttributeBasedExtractor {
+    fn extract_tag_attr(&self, document: Document) -> String {
+        return match document.to_owned().find(Name(self.tag)).next() {
+            Some(node) => String::from(node.attr(self.attr).unwrap_or("")),
+            _ => String::new()
+        };
+    }
+}
+
+
+impl TextExtractor for TagAttributeBasedExtractor {
+    fn extract(&self, document: Document) -> TextExtraction {
+        let text = self.extract_tag_attr(document);
+        return TextExtraction {
+            successful: text != "",
+            text,
+        };
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use select::document::Document;
@@ -126,5 +152,15 @@ mod tests {
         let extraction = extractor.extract(document);
         assert!(extraction.successful);
         assert_eq!(extraction.text, "B first value");
+    }
+
+
+    #[test]
+    fn extract_with_tag_attr_abcnews() {
+        let document = Document::from(include_str!("sites/abcnews.go.com.html"));
+        let extractor = TagAttributeBasedExtractor { tag: "html", attr: "lang" };
+        let extraction = extractor.extract(document);
+        assert!(extraction.successful);
+        assert_eq!(extraction.text, "en");
     }
 }
