@@ -3,8 +3,8 @@
 #[derive(Debug, Clone, Default)]
 pub struct Article {
     pub title: String,
-    pub meta_language: String,
-
+    pub language: String,
+    pub favico: String,
 }
 
 impl Article {

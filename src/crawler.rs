@@ -13,7 +13,8 @@ use crate::charset::charset;
 
 use self::encoding::{DecoderTrap, EncoderTrap, Encoding};
 use self::select::predicate::Predicate;
-use crate::extractor::extractor::get_title;
+use crate::extractor::extractor::{get_title, get_language, get_favico};
+use std::borrow::Borrow;
 
 pub fn add_spaces_between_tags(text: String) -> String {
     return text.replace("<img ", "\n<img ")
@@ -87,7 +88,9 @@ fn crawl(raw_html: String) -> (Article, String) {
         Some(html) => {
             let document = Document::from(html);
             let mut article = Article::new();
-            article.title = get_title(document);
+            article.title = get_title(&document);
+            article.language = get_language(&document);
+            article.favico = get_favico(&document);
             return (article, String::new());
         },
         _ => (Article::new(), String::from("Impossible to pre-process html"))
@@ -132,13 +135,31 @@ mod tests {
         assert_eq!(get_charset(Document::from("<html><head><meta test=\"\"><meta charset=\"dummy\"></head></html>")), "DUMMY");
     }
 
-
     #[test]
-    fn test_crawl() {
+    fn test_crawl_abc() {
         let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
             .expect("Something went wrong reading the file");
 
         let (article, _) = crawl(raw_html);
         assert_eq!(article.title, "New Jersey Devils Owner Apologizes After Landing Helicopter in Middle of Kids' Soccer Game Forces Cancellation - ABC News");
+    }
+
+    #[test]
+    fn test_crawl_bizjournal() {
+        let raw_html = fs::read_to_string("src/extractor/sites/bizjournals.com.html")
+            .expect("Something went wrong reading the file");
+
+        let (article, _) = crawl(raw_html);
+        assert_eq!(article.favico, "http://assets.bizjournals.com/lib/img/favicon.ico");
+    }
+
+    #[test]
+    fn test_crawl_vnexpress() {
+        let raw_html = fs::read_to_string("src/extractor/sites/vnexpress.net.html")
+            .expect("Something went wrong reading the file");
+
+        let (article, _) = crawl(raw_html);
+        assert_eq!(article.title, "Khánh Ly đến viếng mộ Trịnh Công Sơn - VnExpress Giải Trí");
+        assert_eq!(article.language, "vi");
     }
 }
