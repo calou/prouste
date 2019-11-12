@@ -106,11 +106,11 @@ impl TextExtractor for TagAttributeBasedExtractor {
 }
 
 #[derive(Debug)]
-pub struct LinkHrefBasedExtractor {
+pub struct LinkRelContainsHrefBasedExtractor {
     pub attr: &'static str,
     pub value: &'static str,
 }
-impl LinkHrefBasedExtractor {
+impl LinkRelContainsHrefBasedExtractor {
     fn extract_link_url(&self, document: &Document) -> String {
         return match document.to_owned().find(Name("link").and(AttrContains(self.attr, self.value))).next() {
             Some(node) => String::from(node.attr("href").unwrap_or("")),
@@ -118,7 +118,7 @@ impl LinkHrefBasedExtractor {
         };
     }
 }
-impl TextExtractor for LinkHrefBasedExtractor {
+impl TextExtractor for LinkRelContainsHrefBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_link_url(&document);
         return TextExtraction {
@@ -181,7 +181,7 @@ mod tests {
     #[test]
     fn extract_with_link_href_abcnews() {
         let document = Document::from(include_str!("sites/bizjournals.com.html"));
-        let extractor = LinkHrefBasedExtractor { attr: "rel", value: " icon" };
+        let extractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: " icon" };
         let extraction = extractor.extract(&document);
         assert!(extraction.successful);
         assert_eq!(extraction.text, "http://assets.bizjournals.com/lib/img/favicon.ico");

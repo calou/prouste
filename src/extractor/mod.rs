@@ -56,12 +56,12 @@ pub mod extractor {
     }
 
     pub fn get_favico(document: &Document) -> String {
-        let extractor = LinkHrefBasedExtractor { attr: "rel", value: " icon" };
+        let extractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: " icon" };
         return get_text_from_single_extractor(document, Box::new(extractor));
     }
 
     pub fn get_canonical_link(document: &Document) -> String {
-        let extractor = LinkHrefBasedExtractor { attr: "rel", value: "canonical" };
+        let extractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: "canonical" };
         return get_text_from_single_extractor(document, Box::new(extractor));
     }
 
