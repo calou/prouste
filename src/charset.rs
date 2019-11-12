@@ -43,9 +43,6 @@ pub mod charset {
 
     #[cfg(test)]
     mod tests {
-        use std::string::String;
-
-        // Note this useful idiom: importing names from outer (for mod tests) scope.
         use super::*;
 
         #[test]

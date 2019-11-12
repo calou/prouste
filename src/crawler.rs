@@ -98,7 +98,6 @@ fn crawl(raw_html: String) -> (Article, String) {
 mod tests {
     use std::string::String;
     use std::fs;
-    use crate::article::Article;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;

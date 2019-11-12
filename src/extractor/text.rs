@@ -89,8 +89,6 @@ impl TextExtractor for MetaBasedExtractor {
 
 #[cfg(test)]
 mod tests {
-    use std::string::String;
-
     use select::document::Document;
 
     use super::*;

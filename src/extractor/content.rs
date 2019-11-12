@@ -6,11 +6,11 @@ use super::select::node::Node;
 
 
 fn nodes_to_check<'a>(document: Document) -> Vec<Box<Node<'a>>> {
-    let mut nodes = Vec::new();
+    let mut _nodes = Vec::new();
     for node in document.to_owned().find(Name("p").or(Name("pre")).or(Name("td"))){
-        nodes.push(Box::new(node));
+        _nodes.push(Box::new(node));
     }
-    return nodes;
+    return _nodes;
 }
 
 
