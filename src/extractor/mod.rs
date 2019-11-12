@@ -21,7 +21,6 @@ pub mod extractor {
         return String::new();
     }
 
-
     pub fn get_text_from_single_extractor(document: &Document, extractor: Box<dyn TextExtractor>) -> String {
         let text_extraction = extractor.extract(document);
         if text_extraction.successful {
@@ -61,6 +60,10 @@ pub mod extractor {
         return get_text_from_single_extractor(document, Box::new(extractor));
     }
 
+    pub fn get_canonical_link(document: &Document) -> String {
+        let extractor = LinkHrefBasedExtractor { attr: "rel", value: "canonical" };
+        return get_text_from_single_extractor(document, Box::new(extractor));
+    }
 
 
     #[cfg(test)]
@@ -98,9 +101,16 @@ pub mod extractor {
         }
 
         #[test]
-        fn fn_get_favico() {
+        fn test_get_favico() {
             let document = Document::from(include_str!("sites/bizjournals.com.html"));
             assert_eq!(get_favico(&document), "http://assets.bizjournals.com/lib/img/favicon.ico");
         }
+
+        #[test]
+        fn test_get_canonical_link_abcnews() {
+            let document = Document::from(include_str!("sites/abcnews.go.com.html"));
+            assert_eq!(get_canonical_link(&document), "http://abcnews.go.com/US/nj-devils-owner-apologizes-landing-helicopter-middle-kids/story?id=35155591");
+        }
+
     }
 }

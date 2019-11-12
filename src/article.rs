@@ -5,6 +5,7 @@ pub struct Article {
     pub title: String,
     pub language: String,
     pub favico: String,
+    pub canonical_link: String,
 }
 
 impl Article {
