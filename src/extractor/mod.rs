@@ -33,7 +33,7 @@ pub mod extractor {
     pub fn get_raw_title(document: &Document) -> String {
         let title_extractors: Box<[Box<dyn TextExtractor>; 3]> = Box::new([
             Box::new(TagBasedExtractor { tag: "title" }),
-            Box::new(MetaBasedExtractor { attr: "property", value: "og:title" }),
+            Box::new(MetaContentBasedExtractor { attr: "property", value: "og:title" }),
             Box::new(DualTagBasedExtractor { tag1: "post-title", tag2: "headline" }),
         ]);
         return get_text_from_multiple_extractors(document, title_extractors);
@@ -46,7 +46,7 @@ pub mod extractor {
     pub fn get_language(document: &Document) -> String {
         let meta_extractors: Box<[Box<dyn TextExtractor>; 2]> = Box::new([
             Box::new(TagAttributeBasedExtractor { tag: "html", attr: "lang" }),
-            Box::new(MetaBasedExtractor { attr: "http-equiv", value: "content-language"  }),
+            Box::new(MetaContentBasedExtractor { attr: "http-equiv", value: "content-language"  }),
         ]);
         let full_language = get_text_from_multiple_extractors(document, meta_extractors);
         return match full_language.find("-"){

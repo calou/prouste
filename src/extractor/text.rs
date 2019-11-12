@@ -60,11 +60,11 @@ impl TextExtractor for DualTagBasedExtractor {
 }
 
 #[derive(Debug)]
-pub struct MetaBasedExtractor {
+pub struct MetaContentBasedExtractor {
     pub attr: &'static str,
     pub value: &'static str,
 }
-impl MetaBasedExtractor {
+impl MetaContentBasedExtractor {
     fn extract_meta_content(&self, document: &Document) -> String {
         return match document.find(Name("meta").and(Attr(self.attr, self.value))).next() {
             Some(node) => String::from(node.attr("content").unwrap_or("")),
@@ -72,7 +72,7 @@ impl MetaBasedExtractor {
         };
     }
 }
-impl TextExtractor for MetaBasedExtractor {
+impl TextExtractor for MetaContentBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_meta_content(&document);
         return TextExtraction {
@@ -178,7 +178,7 @@ mod tests {
     #[test]
     fn extract_with_og_abcnews() {
         let document = Document::from(include_str!("sites/abcnews.go.com.html"));
-        let extractor = MetaBasedExtractor { attr: "property", value: "og:title" };
+        let extractor = MetaContentBasedExtractor { attr: "property", value: "og:title" };
         let extraction = extractor.extract(&document);
         assert!(extraction.successful);
         assert_eq!(extraction.text, "NHL Owner Apologizes for Landing Helicopter at Kids' Soccer Game");
