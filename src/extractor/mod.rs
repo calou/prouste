@@ -10,7 +10,7 @@ pub mod extractor {
     use crate::extractor::text::*;
     use std::ops::Index;
 
-    fn get_text_from_extractors(document: &Document, text_extractors: Box<[Box<dyn TextExtractor>]>) -> String {
+    fn get_text_from_multiple_extractors(document: &Document, text_extractors: Box<[Box<dyn TextExtractor>]>) -> String {
         for text_extractor in text_extractors.iter() {
             let extr = &**text_extractor;
             let text_extraction = extr.extract(document);
@@ -21,13 +21,23 @@ pub mod extractor {
         return String::new();
     }
 
+
+    pub fn get_text_from_single_extractor(document: &Document, extractor: Box<dyn TextExtractor>) -> String {
+        let text_extraction = extractor.extract(document);
+        if text_extraction.successful {
+            return text_extraction.text;
+        } else {
+            return String::new()
+        }
+    }
+
     pub fn get_raw_title(document: &Document) -> String {
         let title_extractors: Box<[Box<dyn TextExtractor>; 3]> = Box::new([
             Box::new(TagBasedExtractor { tag: "title" }),
             Box::new(MetaBasedExtractor { attr: "property", value: "og:title" }),
             Box::new(DualTagBasedExtractor { tag1: "post-title", tag2: "headline" }),
         ]);
-        return get_text_from_extractors(document, title_extractors);
+        return get_text_from_multiple_extractors(document, title_extractors);
     }
 
     pub fn get_title(document: &Document) -> String {
@@ -39,20 +49,16 @@ pub mod extractor {
             Box::new(TagAttributeBasedExtractor { tag: "html", attr: "lang" }),
             Box::new(MetaBasedExtractor { attr: "http-equiv", value: "content-language"  }),
         ]);
-        let full_language = get_text_from_extractors(document, meta_extractors);
+        let full_language = get_text_from_multiple_extractors(document, meta_extractors);
         return match full_language.find("-"){
             Some(idx) => String::from(&full_language[..idx]),
             _ => full_language
         };
     }
+
     pub fn get_favico(document: &Document) -> String {
         let extractor = LinkHrefBasedExtractor { attr: "rel", value: " icon" };
-        let text_extraction = extractor.extract(document);
-        if text_extraction.successful {
-            return text_extraction.text;
-        } else {
-            return String::new()
-        }
+        return get_text_from_single_extractor(document, Box::new(extractor));
     }
 
 
