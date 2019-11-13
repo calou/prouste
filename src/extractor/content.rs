@@ -1,18 +1,19 @@
-extern crate stopwords;
+
 
 use std::borrow::Borrow;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::iter::FromIterator;
 use std::vec::Vec;
 
 use select::document::Document;
 use select::predicate::{Attr, Name, Predicate};
-use stopwords::{Language, NLTK, Stopwords};
+use crate::extractor::stopwords::{has_more_stopwords_than, count_stopwords};
+
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::select::node::Node;
-use std::iter::FromIterator;
 
-fn get_top_node(document: &Document) -> Option<Node> {
+fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
     let mut top_node: Option<usize> = None;
     let mut starting_boost: f32 = 1.0;
     let mut i: usize = 0;
@@ -21,7 +22,7 @@ fn get_top_node(document: &Document) -> Option<Node> {
     for node in document.find(Name("p").or(Name("pre")).or(Name("td"))) {
         let node_text = node.text();
         let text_words_count = count_words(&node_text);
-        if has_more_stopwords_than(&node_text, 2) && !is_high_density_link(&node, text_words_count) {
+        if has_more_stopwords_than(&node_text, lang, 2) && !is_high_density_link(&node, text_words_count) {
             nodes_with_text.insert(node.index(), node_text);
         }
 
@@ -30,7 +31,7 @@ fn get_top_node(document: &Document) -> Option<Node> {
         let bottom_negative_scoring = nodes_with_text_count / 4;
         for (node_index, text) in nodes_with_text.iter() {
             let mut boost_score: f32 = 0.0;
-            if is_boostable(&node) {
+            if is_boostable(&node, lang) {
                 boost_score = 50.0 / starting_boost;
             }
             if nodes_with_text_count > 15 {
@@ -46,7 +47,7 @@ fn get_top_node(document: &Document) -> Option<Node> {
                 }
             }
 
-            let up_score = count_stopwords(text) + (boost_score) as usize;
+            let up_score = count_stopwords(text, lang) + (boost_score) as usize;
             let parentNode = document.nth(*node_index).unwrap().parent().unwrap();
             update_node_in_map(&mut score_per_node, parentNode.index(), up_score);
 
@@ -74,14 +75,14 @@ fn get_top_node(document: &Document) -> Option<Node> {
     };
 }
 
-fn is_boostable(node: &Node) -> bool {
+fn is_boostable(node: &Node, lang: &str) -> bool {
     let mut sibling_distance: u32 = 0;
     let mut sibling_option = node.next();
     while sibling_option.is_some() {
         let sibling = sibling_option.unwrap();
         if sibling.name().unwrap_or("") == "p" {
             let sibling_text = sibling.text();
-            if has_more_stopwords_than(&sibling_text, 5) {
+            if has_more_stopwords_than(&sibling_text, lang, 5) {
                 return true;
             }
         }
@@ -113,50 +114,10 @@ fn count_words(text: &String) -> usize {
     return text.as_str().unicode_words().count();
 }
 
-fn count_max_stopwords(text: &String, n: usize) -> usize {
-    let unicode_words = text.as_str().unicode_words();
-    let stopwords: HashSet<_> = get_stopwords_from_language("en");
-    let mut nb_stopwords: usize = 0;
-    for word in unicode_words.into_iter() {
-        if nb_stopwords > (n) as usize {
-            return nb_stopwords;
-        }
-        if stopwords.contains(&word.to_ascii_lowercase().as_str()){
-            nb_stopwords += 1;
-        }
-    }
-    return nb_stopwords;
-}
-
-fn count_stopwords(text: &String) -> usize {
-    return count_max_stopwords(text, 999999);
-}
-
-fn has_more_stopwords_than(text: &String, n: usize) -> bool {
-    let number_of_stopwords = count_max_stopwords(text, n);
-    return number_of_stopwords >= n;
-}
-
 fn update_node_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) {
     let default_value: usize = 0;
     let mut current_score = score_per_node.get(&node_index).unwrap_or(&default_value);
     score_per_node.insert(node_index, current_score + increment);
-}
-
-fn get_stopwords_from_language(lang: &str) -> HashSet<&&str>{
-    return match lang{
-        "en" => NLTK::stopwords(Language::English).unwrap().iter().collect(),
-        "fr" => NLTK::stopwords(Language::French).unwrap().iter().collect(),
-        "de" => NLTK::stopwords(Language::German).unwrap().iter().collect(),
-        "es" => NLTK::stopwords(Language::Spanish).unwrap().iter().collect(),
-        "sw" => NLTK::stopwords(Language::Swedish).unwrap().iter().collect(),
-        "it" => NLTK::stopwords(Language::Italian).unwrap().iter().collect(),
-        "pt" => NLTK::stopwords(Language::Portuguese).unwrap().iter().collect(),
-        "ru" => NLTK::stopwords(Language::Russian).unwrap().iter().collect(),
-        "nl" => NLTK::stopwords(Language::Dutch).unwrap().iter().collect(),
-        "fi" => NLTK::stopwords(Language::Finnish).unwrap().iter().collect(),
-        _ => HashSet::new()
-    };
 }
 
 #[cfg(test)]
@@ -168,27 +129,26 @@ mod tests {
     #[test]
     fn test_get_top_node_simple() {
         let document = Document::from("<html><body><div><p>This is a paragraph</p><h1></h1><br/><pre>Paris</pre></div><span></span></html>");
-        assert_eq!(get_top_node(&document).unwrap().name().unwrap(), "div");
+        assert_eq!(get_top_node(&document, "en").unwrap().name().unwrap(), "div");
     }
 
     #[test]
     fn test_get_top_node_nominal() {
         let document = Document::from(include_str!("sites/theguardian.com.html"));
-        let node = get_top_node(&document).unwrap();
+        let node = get_top_node(&document, "en").unwrap();
         assert_eq!(node.name().unwrap(), "div");
         println!("{}", node.text());
     }
 
     #[test]
-    fn test_has_more_stopwords_than(){
+    fn test_has_more_stopwords_than() {
         let text = String::from("I live in London in England");
-        assert!(has_more_stopwords_than(&text, 2));
+        assert!(has_more_stopwords_than(&text, "en", 2));
     }
 
     #[test]
-    fn test_count_stopwords(){
+    fn test_count_stopwords() {
         let text = String::from("I live in London in England");
-        assert_eq!(count_stopwords(&text), 3);
+        assert_eq!(count_stopwords(&text, "en"), 3);
     }
-
 }

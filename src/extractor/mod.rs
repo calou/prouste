@@ -3,6 +3,7 @@ extern crate select;
 pub mod text;
 pub mod content;
 pub mod predicate;
+mod stopwords;
 
 pub mod extractor {
     use select::document::Document;
