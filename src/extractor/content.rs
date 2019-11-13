@@ -1,12 +1,16 @@
+extern crate stopwords;
+
 use std::borrow::Borrow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::vec::Vec;
 
 use select::document::Document;
 use select::predicate::{Attr, Name, Predicate};
+use stopwords::{Language, NLTK, Stopwords};
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::select::node::Node;
+use std::iter::FromIterator;
 
 fn get_top_node(document: &Document) -> Option<Node> {
     let mut top_node: Option<usize> = None;
@@ -16,7 +20,8 @@ fn get_top_node(document: &Document) -> Option<Node> {
     let mut score_per_node: HashMap<usize, usize> = HashMap::new();
     for node in document.find(Name("p").or(Name("pre")).or(Name("td"))) {
         let node_text = node.text();
-        if has_more_stopwords_than(&node_text, 2) && !is_high_density_link(&node, &node_text) {
+        let text_words_count = count_words(&node_text);
+        if has_more_stopwords_than(&node_text, 2) && !is_high_density_link(&node, text_words_count) {
             nodes_with_text.insert(node.index(), node_text);
         }
 
@@ -63,12 +68,10 @@ fn get_top_node(document: &Document) -> Option<Node> {
             }
         }
     }
-    return match top_node{
+    return match top_node {
         Some(idx) => Node::new(document, idx),
         _ => None
     };
-
-
 }
 
 fn is_boostable(node: &Node) -> bool {
@@ -91,8 +94,7 @@ fn is_boostable(node: &Node) -> bool {
     return false;
 }
 
-fn is_high_density_link(node: &Node, node_text: &String) -> bool {
-    let text_words_count = count_words(node_text);
+fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
     if text_words_count == 0 {
         return true;
     }
@@ -111,17 +113,32 @@ fn count_words(text: &String) -> usize {
     return text.as_str().unicode_words().count();
 }
 
+fn count_max_stopwords(text: &String, n: usize) -> usize {
+    let unicode_words = text.as_str().unicode_words();
+    let stopwords: HashSet<_> = NLTK::stopwords(Language::English).unwrap().iter().collect();
+    let mut nb_stopwords: usize = 0;
+    for word in unicode_words.into_iter() {
+        println!("{}",word);
+        if nb_stopwords > (n) as usize {
+            return nb_stopwords;
+        }
+        if stopwords.contains(&word.to_ascii_lowercase().as_str()){
+            nb_stopwords += 1;
+        }
+    }
+    return nb_stopwords;
+}
+
 fn count_stopwords(text: &String) -> usize {
-    // TODO
-    return 10;
+    return count_max_stopwords(text, 999999);
 }
 
-fn has_more_stopwords_than(text: &String, n: u8) -> bool {
-    // TODO
-    return true;
+fn has_more_stopwords_than(text: &String, n: usize) -> bool {
+    let number_of_stopwords = count_max_stopwords(text, n);
+    return number_of_stopwords >= n;
 }
 
-fn update_node_in_map<'a>(score_per_node: &'a mut HashMap<usize, usize>, node_index: usize, increment: usize) {
+fn update_node_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) {
     let default_value: usize = 0;
     let mut current_score = score_per_node.get(&node_index).unwrap_or(&default_value);
     score_per_node.insert(node_index, current_score + increment);
@@ -141,9 +158,22 @@ mod tests {
 
     #[test]
     fn test_get_top_node_nominal() {
-        let document = Document::from(include_str!("sites/abcnews.go.com.html"));
+        let document = Document::from(include_str!("sites/theguardian.com.html"));
         let node = get_top_node(&document).unwrap();
         assert_eq!(node.name().unwrap(), "div");
         println!("{}", node.text());
     }
+
+    #[test]
+    fn test_has_more_stopwords_than(){
+        let text = String::from("I live in London in England");
+        assert!(has_more_stopwords_than(&text, 2));
+    }
+
+    #[test]
+    fn test_count_stopwords(){
+        let text = String::from("I live in London in England");
+        assert_eq!(count_stopwords(&text), 3);
+    }
+
 }
