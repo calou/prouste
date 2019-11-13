@@ -29,9 +29,10 @@ fn get_top_node(document: &Document) -> Option<Node> {
                 boost_score = 50.0 / starting_boost;
             }
             if nodes_with_text_count > 15 {
-                let booster = bottom_negative_scoring + i - nodes_with_text_count;
+                let booster: i32 = (bottom_negative_scoring + i - nodes_with_text_count) as i32;
+                println!("booster {}", booster);
                 if booster >= 0 {
-                    let x = usize::pow(booster, 2);
+                    let x = i32::pow(booster, 2);
                     if x > 40 {
                         boost_score = 5.0;
                     } else {
@@ -133,8 +134,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_get_top_node_nominal() {
+    fn test_get_top_node_simple() {
         let document = Document::from("<html><body><div><p>This is a paragraph</p><h1></h1><br/><pre>Paris</pre></div><span></span></html>");
         assert_eq!(get_top_node(&document).unwrap().name().unwrap(), "div");
+    }
+
+    #[test]
+    fn test_get_top_node_nominal() {
+        let document = Document::from(include_str!("sites/abcnews.go.com.html"));
+        let node = get_top_node(&document).unwrap();
+        assert_eq!(node.name().unwrap(), "div");
+        println!("{}", node.text());
     }
 }
