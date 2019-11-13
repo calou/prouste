@@ -115,10 +115,9 @@ fn count_words(text: &String) -> usize {
 
 fn count_max_stopwords(text: &String, n: usize) -> usize {
     let unicode_words = text.as_str().unicode_words();
-    let stopwords: HashSet<_> = NLTK::stopwords(Language::English).unwrap().iter().collect();
+    let stopwords: HashSet<_> = get_stopwords_from_language("en");
     let mut nb_stopwords: usize = 0;
     for word in unicode_words.into_iter() {
-        println!("{}",word);
         if nb_stopwords > (n) as usize {
             return nb_stopwords;
         }
@@ -142,6 +141,22 @@ fn update_node_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: us
     let default_value: usize = 0;
     let mut current_score = score_per_node.get(&node_index).unwrap_or(&default_value);
     score_per_node.insert(node_index, current_score + increment);
+}
+
+fn get_stopwords_from_language(lang: &str) -> HashSet<&&str>{
+    return match lang{
+        "en" => NLTK::stopwords(Language::English).unwrap().iter().collect(),
+        "fr" => NLTK::stopwords(Language::French).unwrap().iter().collect(),
+        "de" => NLTK::stopwords(Language::German).unwrap().iter().collect(),
+        "es" => NLTK::stopwords(Language::Spanish).unwrap().iter().collect(),
+        "sw" => NLTK::stopwords(Language::Swedish).unwrap().iter().collect(),
+        "it" => NLTK::stopwords(Language::Italian).unwrap().iter().collect(),
+        "pt" => NLTK::stopwords(Language::Portuguese).unwrap().iter().collect(),
+        "ru" => NLTK::stopwords(Language::Russian).unwrap().iter().collect(),
+        "nl" => NLTK::stopwords(Language::Dutch).unwrap().iter().collect(),
+        "fi" => NLTK::stopwords(Language::Finnish).unwrap().iter().collect(),
+        _ => HashSet::new()
+    };
 }
 
 #[cfg(test)]
