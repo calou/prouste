@@ -69,6 +69,11 @@ pub mod extractor {
         return get_text_from_single_extractor(document, Box::new(extractor));
     }
 
+    pub fn get_top_image(document: &Document) -> String {
+        let extractor = TopImageExtractor {};
+        return get_text_from_single_extractor(document, Box::new(extractor));
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;

@@ -1,9 +1,10 @@
+use std::collections::{HashMap, BTreeMap};
 use std::string::String;
 
 use select::document::Document;
 use select::predicate::{Attr, Name, Predicate};
-use crate::extractor::predicate::AttrContains;
 
+use crate::extractor::predicate::{AttrContains, ImageTag};
 
 pub struct TextExtraction {
     pub successful: bool,
@@ -18,6 +19,7 @@ pub trait TextExtractor {
 pub struct TagBasedExtractor {
     pub tag: &'static str,
 }
+
 impl TagBasedExtractor {
     fn extract_tag_text(&self, document: &Document) -> String {
         return match document.find(Name(self.tag)).next() {
@@ -26,6 +28,7 @@ impl TagBasedExtractor {
         };
     }
 }
+
 impl TextExtractor for TagBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_tag_text(document);
@@ -41,6 +44,7 @@ pub struct DualTagBasedExtractor {
     pub tag1: &'static str,
     pub tag2: &'static str,
 }
+
 impl DualTagBasedExtractor {
     fn extract_tag_text(&self, document: &Document) -> String {
         return match document.find(Name(self.tag1).or(Name(self.tag2))).next() {
@@ -49,6 +53,7 @@ impl DualTagBasedExtractor {
         };
     }
 }
+
 impl TextExtractor for DualTagBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_tag_text(document);
@@ -64,6 +69,7 @@ pub struct MetaContentBasedExtractor {
     pub attr: &'static str,
     pub value: &'static str,
 }
+
 impl MetaContentBasedExtractor {
     fn extract_meta_content(&self, document: &Document) -> String {
         return match document.find(Name("meta").and(Attr(self.attr, self.value))).next() {
@@ -72,6 +78,7 @@ impl MetaContentBasedExtractor {
         };
     }
 }
+
 impl TextExtractor for MetaContentBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_meta_content(&document);
@@ -87,6 +94,7 @@ pub struct TagAttributeBasedExtractor {
     pub tag: &'static str,
     pub attr: &'static str,
 }
+
 impl TagAttributeBasedExtractor {
     fn extract_tag_attr(&self, document: &Document) -> String {
         return match document.find(Name(self.tag)).next() {
@@ -95,6 +103,7 @@ impl TagAttributeBasedExtractor {
         };
     }
 }
+
 impl TextExtractor for TagAttributeBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_tag_attr(&document);
@@ -110,6 +119,7 @@ pub struct LinkRelEqualsHrefBasedExtractor {
     pub attr: &'static str,
     pub value: &'static str,
 }
+
 impl LinkRelEqualsHrefBasedExtractor {
     fn extract_link_url(&self, document: &Document) -> String {
         return match document.find(Name("link").and(Attr(self.attr, self.value))).next() {
@@ -118,6 +128,7 @@ impl LinkRelEqualsHrefBasedExtractor {
         };
     }
 }
+
 impl TextExtractor for LinkRelEqualsHrefBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_link_url(&document);
@@ -134,6 +145,7 @@ pub struct LinkRelContainsHrefBasedExtractor {
     pub attr: &'static str,
     pub value: &'static str,
 }
+
 impl LinkRelContainsHrefBasedExtractor {
     fn extract_link_url(&self, document: &Document) -> String {
         return match document.find(Name("link").and(AttrContains(self.attr, self.value))).next() {
@@ -142,6 +154,7 @@ impl LinkRelContainsHrefBasedExtractor {
         };
     }
 }
+
 impl TextExtractor for LinkRelContainsHrefBasedExtractor {
     fn extract(&self, document: &Document) -> TextExtraction {
         let text = self.extract_link_url(&document);
@@ -151,6 +164,60 @@ impl TextExtractor for LinkRelContainsHrefBasedExtractor {
         };
     }
 }
+
+#[derive(Debug)]
+pub struct TopImageExtractor;
+
+impl TextExtractor for TopImageExtractor {
+    fn extract(&self, document: &Document) -> TextExtraction {
+        let mut counts = BTreeMap::new();
+        for node in document.find(ImageTag {}).into_iter() {
+            println!("matching {} ", node.html());
+            match node.name() {
+                Some("meta") => {
+                    match node.attr("name") {
+                        Some("og:image") | Some("twitter:image") | Some("twitter:image:src") => {
+                            let key = node.attr("content").unwrap_or("");
+                            *counts.entry(String::from(key)).or_insert(0u32) += 1u32;
+                        }
+                        _ => ()
+                    }
+                    match node.attr("property") {
+                        Some("og:image") | Some("twitter:image") | Some("twitter:image:src") => {
+                            let key = node.attr("content").unwrap_or("");
+                            *counts.entry(String::from(key)).or_insert(0u32) += 1u32;
+                        }
+                        _ => ()
+                    }
+                }
+                Some("link") => {
+                    match node.attr("rel") {
+                        Some("image_src") => {
+                            let key = node.attr("href").unwrap_or("");
+                            *counts.entry(String::from(key)).or_insert(0u32) += 1u32;
+                        }
+                        _ => ()
+                    }
+                }
+                _ => ()
+            }
+        }
+        let mut text = String::new();
+        let mut max_count = 0u32;
+        for (img, c) in counts.iter() {
+            println!("{} - {}", c, img);
+            if *c > max_count {
+                text = img.to_owned();
+                max_count = *c;
+            }
+        }
+        return TextExtraction {
+            successful: text != "",
+            text,
+        };
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -203,11 +270,30 @@ mod tests {
     }
 
     #[test]
-    fn extract_with_link_href_abcnews() {
+    fn extract_with_link_href_bizjournals() {
         let document = Document::from(include_str!("sites/bizjournals.com.html"));
         let extractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: " icon" };
         let extraction = extractor.extract(&document);
         assert!(extraction.successful);
         assert_eq!(extraction.text, "http://assets.bizjournals.com/lib/img/favicon.ico");
+    }
+
+
+    #[test]
+    fn extract_top_image_bizjournals() {
+        let document = Document::from(include_str!("sites/bizjournals.com.html"));
+        let extractor = TopImageExtractor {};
+        let extraction = extractor.extract(&document);
+        assert!(extraction.successful);
+        assert_eq!(extraction.text, "http://media.bizj.us/view/img/2167041/mason-morfit*400xx306-307-0-25.jpg");
+    }
+
+    #[test]
+    fn extract_top_image_blogspot_co_uk() {
+        let document = Document::from(include_str!("sites/blogspot.co.uk.html"));
+        let extractor = TopImageExtractor {};
+        let extraction = extractor.extract(&document);
+        assert!(extraction.successful);
+        assert_eq!(extraction.text, "http://3.bp.blogspot.com/-6SCcCupadL0/VUnQdhs_98I/AAAAAAAAA7Q/wCdIXm6v9Sg/s540/Screen%2BShot%2B2015-05-06%2Bat%2B10.22.08%2BAM.png");
     }
 }
