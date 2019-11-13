@@ -1,14 +1,12 @@
 extern crate select;
 
 pub mod text;
-//pub mod content;
+pub mod content;
 pub mod predicate;
 
 pub mod extractor {
     use select::document::Document;
-
     use crate::extractor::text::*;
-    use std::ops::Index;
 
     fn get_text_from_multiple_extractors(document: &Document, text_extractors: Box<[Box<dyn TextExtractor>]>) -> String {
         for text_extractor in text_extractors.iter() {
@@ -65,6 +63,10 @@ pub mod extractor {
         return get_text_from_single_extractor(document, Box::new(extractor));
     }
 
+    pub fn get_meta_keywords(document: &Document) -> String {
+        let extractor = MetaContentBasedExtractor { attr: "name", value: "keywords" };
+        return get_text_from_single_extractor(document, Box::new(extractor));
+    }
 
     #[cfg(test)]
     mod tests {

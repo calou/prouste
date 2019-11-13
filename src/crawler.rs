@@ -13,8 +13,7 @@ use crate::charset::charset;
 
 use self::encoding::{DecoderTrap, EncoderTrap, Encoding};
 use self::select::predicate::Predicate;
-use crate::extractor::extractor::{get_title, get_language, get_favico, get_canonical_link};
-use std::borrow::Borrow;
+use crate::extractor::extractor::{get_title, get_language, get_favico, get_canonical_link, get_meta_keywords};
 
 pub fn add_spaces_between_tags(text: String) -> String {
     return text.replace("<img ", "\n<img ")
@@ -92,6 +91,8 @@ fn crawl(raw_html: String) -> (Article, String) {
             article.language = get_language(&document);
             article.favico = get_favico(&document);
             article.canonical_link = get_canonical_link(&document);
+            article.meta_keywords = get_meta_keywords(&document);
+
             return (article, String::new());
         },
         _ => (Article::new(), String::from("Impossible to pre-process html"))
@@ -144,6 +145,7 @@ mod tests {
         let (article, _) = crawl(raw_html);
         assert_eq!(article.title, "New Jersey Devils Owner Apologizes After Landing Helicopter in Middle of Kids' Soccer Game Forces Cancellation - ABC News");
         assert_eq!(article.canonical_link, "http://abcnews.go.com/US/nj-devils-owner-apologizes-landing-helicopter-middle-kids/story?id=35155591");
+        assert_eq!(article.meta_keywords, "nj devils owner lands helicopter kids soccer game, helicopter youth soccer game, newark, new jersey, nj nj devils, nhl, josh harris, helicopter cancels soccer game, st benedict preparatory school, sta u13, youth soccer, us news, national news, local news");
     }
 
     #[test]
