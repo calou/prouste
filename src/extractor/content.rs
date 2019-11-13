@@ -15,10 +15,8 @@ fn get_top_node(document: &Document) -> Option<Node> {
     let mut nodes_with_text: HashMap<usize, String> = HashMap::new();
     let mut score_per_node: HashMap<usize, usize> = HashMap::new();
     for node in document.find(Name("p").or(Name("pre")).or(Name("td"))) {
-        let node_text = node.text().to_owned();
-
-        // TODO Handle stop words
-        if is_high_density_link(&node, &node_text) {
+        let node_text = node.text();
+        if has_more_stopwords_than(&node_text, 2) && !is_high_density_link(&node, &node_text) {
             nodes_with_text.insert(node.index(), node_text);
         }
 
@@ -78,7 +76,8 @@ fn is_boostable(node: &Node) -> bool {
     while sibling_option.is_some() {
         let sibling = sibling_option.unwrap();
         if sibling.name().unwrap_or("") == "p" {
-            if has_more_stopword_than(sibling.text(), 5) {
+            let sibling_text = sibling.text();
+            if has_more_stopwords_than(&sibling_text, 5) {
                 return true;
             }
         }
@@ -92,7 +91,6 @@ fn is_boostable(node: &Node) -> bool {
 }
 
 fn is_high_density_link(node: &Node, node_text: &String) -> bool {
-    let mut is_high_density_link = false;
     let text_words_count = count_words(node_text);
     if text_words_count == 0 {
         return true;
@@ -109,16 +107,15 @@ fn is_high_density_link(node: &Node, node_text: &String) -> bool {
 }
 
 fn count_words(text: &String) -> usize {
-    println!("words {}", text);
     return text.as_str().unicode_words().count();
 }
 
 fn count_stopwords(text: &String) -> usize {
     // TODO
-    return 1;
+    return 10;
 }
 
-fn has_more_stopword_than(text: String, n: u8) -> bool {
+fn has_more_stopwords_than(text: &String, n: u8) -> bool {
     // TODO
     return true;
 }
@@ -137,7 +134,7 @@ mod tests {
 
     #[test]
     fn test_get_top_node_nominal() {
-        let document = Document::from("<html><p></p><h1></h1><br/><pre></pre></html>");
+        let document = Document::from("<html><body><div><p>This is a paragraph</p><h1></h1><br/><pre>Paris</pre></div><span></span></html>");
         assert_eq!(get_top_node(&document).unwrap().name().unwrap(), "div");
     }
 }
