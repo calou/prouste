@@ -219,6 +219,7 @@ impl TextExtractor for TopImageExtractor {
 }
 
 
+
 #[cfg(test)]
 mod tests {
     use select::document::Document;
