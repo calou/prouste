@@ -1,12 +1,16 @@
 extern crate select;
 
-pub mod text;
-pub mod content;
-pub mod predicate;
+mod text;
+mod content;
+mod predicate;
 mod stopwords;
 
 pub mod extractor {
+    use std::collections::BTreeSet;
+
     use select::document::Document;
+
+    use crate::extractor::content::{get_cleaned_text_and_links, get_top_node};
     use crate::extractor::text::*;
 
     fn get_text_from_multiple_extractors(document: &Document, text_extractors: Box<[Box<dyn TextExtractor>]>) -> String {
@@ -25,7 +29,7 @@ pub mod extractor {
         if text_extraction.successful {
             return text_extraction.text;
         } else {
-            return String::new()
+            return String::new();
         }
     }
 
@@ -45,10 +49,10 @@ pub mod extractor {
     pub fn get_language(document: &Document) -> String {
         let meta_extractors: Box<[Box<dyn TextExtractor>; 2]> = Box::new([
             Box::new(TagAttributeBasedExtractor { tag: "html", attr: "lang" }),
-            Box::new(MetaContentBasedExtractor { attr: "http-equiv", value: "content-language"  }),
+            Box::new(MetaContentBasedExtractor { attr: "http-equiv", value: "content-language" }),
         ]);
         let full_language = get_text_from_multiple_extractors(document, meta_extractors);
-        return match full_language.find("-"){
+        return match full_language.find("-") {
             Some(idx) => String::from(&full_language[..idx]),
             _ => full_language
         };
@@ -72,6 +76,14 @@ pub mod extractor {
     pub fn get_top_image(document: &Document) -> String {
         let extractor = TopImageExtractor {};
         return get_text_from_single_extractor(document, Box::new(extractor));
+    }
+
+    pub fn get_text_and_links(document: &Document, lang: &str) -> (String, BTreeSet<String>) {
+        let top_node = get_top_node(document, lang);
+        return match top_node {
+            Some(node) => get_cleaned_text_and_links(node, lang),
+            _ => (String::new(), BTreeSet::new())
+        };
     }
 
     #[cfg(test)]
@@ -119,6 +131,5 @@ pub mod extractor {
             let document = Document::from(include_str!("sites/abcnews.go.com.html"));
             assert_eq!(get_canonical_link(&document), "http://abcnews.go.com/US/nj-devils-owner-apologizes-landing-helicopter-middle-kids/story?id=35155591");
         }
-
     }
 }

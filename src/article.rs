@@ -3,6 +3,7 @@
 #[derive(Debug, Clone, Default)]
 pub struct Article {
     pub title: String,
+    pub text: String,
     pub language: String,
     pub favico: String,
     pub canonical_link: String,

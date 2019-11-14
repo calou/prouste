@@ -94,6 +94,9 @@ fn crawl(raw_html: String) -> (Article, String) {
             article.meta_keywords = get_meta_keywords(&document);
             article.top_image = get_top_image(&document);
 
+
+            let (text, links) = get_text_and_links(&document, article.language.as_ref());
+            article.text = text;
             return (article, String::new());
         },
         _ => (Article::new(), String::from("Impossible to pre-process html"))

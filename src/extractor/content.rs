@@ -11,7 +11,7 @@ use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
 
 use super::select::node::Node;
 
-fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
+pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
     let mut top_node: Option<usize> = None;
     let mut starting_boost: f32 = 1.0;
     let mut i: usize = 0;
@@ -136,7 +136,7 @@ fn get_base_paragraph_score(node: Node, lang: &str) -> usize {
     }
 }
 
-fn get_cleaned_text_and_links(node: Node, lang: &str) -> (String, BTreeSet<String>){
+pub fn get_cleaned_text_and_links(node: Node, lang: &str) -> (String, BTreeSet<String>){
     let excluded_nodes = get_removed_nodes(node);
 
     let mut text = String::new();
