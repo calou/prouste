@@ -16,21 +16,17 @@ pub mod extractor {
     fn get_text_from_multiple_extractors(document: &Document, text_extractors: Box<[Box<dyn TextExtractor>]>) -> String {
         for text_extractor in text_extractors.iter() {
             let extr = &**text_extractor;
-            let text_extraction = extr.extract(document);
-            if text_extraction.successful {
-                return text_extraction.text;
+            let opt = extr.extract(document);
+            if opt.is_some() {
+                return opt.unwrap();
             }
         }
         return String::new();
     }
 
     pub fn get_text_from_single_extractor(document: &Document, extractor: Box<dyn TextExtractor>) -> String {
-        let text_extraction = extractor.extract(document);
-        if text_extraction.successful {
-            return text_extraction.text;
-        } else {
-            return String::new();
-        }
+        let opt = extractor.extract(document);
+        return opt.unwrap_or(String::new());
     }
 
     pub fn get_raw_title(document: &Document) -> String {
