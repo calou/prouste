@@ -74,11 +74,11 @@ pub mod extractor {
         return get_text_from_single_extractor(document, Box::new(extractor));
     }
 
-    pub fn get_text_and_links(document: &Document, lang: &str) -> (String, BTreeSet<String>) {
+    pub fn get_text_and_links(document: &Document, lang: &str) -> (String, Vec<String>) {
         let top_node = get_top_node(document, lang);
         return match top_node {
             Some(node) => get_cleaned_text_and_links(node, lang),
-            _ => (String::new(), BTreeSet::new())
+            _ => (String::new(), Vec::new())
         };
     }
 

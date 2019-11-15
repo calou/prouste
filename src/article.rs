@@ -1,4 +1,4 @@
-
+use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Default)]
 pub struct Article {
@@ -9,6 +9,7 @@ pub struct Article {
     pub canonical_link: String,
     pub meta_keywords: String,
     pub top_image: String,
+    pub links: Vec<String>,
 }
 
 impl Article {

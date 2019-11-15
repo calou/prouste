@@ -136,11 +136,11 @@ fn get_base_paragraph_score(node: Node, lang: &str) -> usize {
     }
 }
 
-pub fn get_cleaned_text_and_links(node: Node, lang: &str) -> (String, BTreeSet<String>){
+pub fn get_cleaned_text_and_links(node: Node, lang: &str) -> (String, Vec<String>){
     let excluded_nodes = get_removed_nodes(node);
 
     let mut text = String::new();
-    let mut links : BTreeSet<String> = BTreeSet::new();
+    let mut links : Vec<String> = Vec::new();
     for descendant in node.descendants(){
         if!excluded_nodes.contains(&descendant.index()){
             if descendant.children().count() == 0 {
@@ -150,12 +150,12 @@ pub fn get_cleaned_text_and_links(node: Node, lang: &str) -> (String, BTreeSet<S
                 }
             }
 
-            /*for l in descendant.find(Name("a")){
-                let option = l.attr("href");
-                if option.is_some(){
-                    links.insert(String::from(option.unwrap()))
-                }
-            }*/
+            for l in descendant.find(Name("a")){
+                match l.attr("href"){
+                    Some(l) => links.push(String::from(l)),
+                    _ => ()
+                };
+            }
         }
     }
     return (text, links);

@@ -97,6 +97,8 @@ pub fn crawl(raw_html: String) -> (Article, String) {
 
             let (text, links) = get_text_and_links(&document, article.language.as_ref());
             article.text = text;
+            article.links = links;
+
             return (article, String::new());
         },
         _ => (Article::new(), String::from("Impossible to pre-process html"))
@@ -151,6 +153,9 @@ mod tests {
         assert_eq!(article.canonical_link, "http://abcnews.go.com/US/nj-devils-owner-apologizes-landing-helicopter-middle-kids/story?id=35155591");
         assert_eq!(article.meta_keywords, "nj devils owner lands helicopter kids soccer game, helicopter youth soccer game, newark, new jersey, nj nj devils, nhl, josh harris, helicopter cancels soccer game, st benedict preparatory school, sta u13, youth soccer, us news, national news, local news");
         assert_eq!(article.top_image, "http://a.abcnews.go.com/images/US/ht_devils_helicopter_landing_hb_151112_16x9_992.jpg");
+        for link in article.links{
+            println!("{}", link);
+        }
     }
 
     #[test]
