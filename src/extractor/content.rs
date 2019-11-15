@@ -13,7 +13,7 @@ use super::select::node::Node;
 
 pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
     let mut top_node: Option<usize> = None;
-    let mut starting_boost: f32 = 1.0;
+    let starting_boost: f32 = 1.0;
     let mut i: usize = 0;
     let mut nodes_with_text: HashMap<usize, String> = HashMap::new();
     let mut score_per_node: HashMap<usize, usize> = HashMap::new();
@@ -45,13 +45,13 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
             }
 
             let up_score = count_stopwords(text, lang) + (boost_score) as usize;
-            let parentNode = document.nth(*node_index).unwrap().parent().unwrap();
-            update_node_in_map(&mut score_per_node, parentNode.index(), up_score);
+            let parent_node = document.nth(*node_index).unwrap().parent().unwrap();
+            update_node_in_map(&mut score_per_node, parent_node.index(), up_score);
 
-            let grandparent_node = parentNode.parent();
+            let grandparent_node = parent_node.parent();
             match grandparent_node {
                 Some(gp) => {
-                    update_node_in_map(&mut score_per_node, parentNode.index(), up_score / 2);
+                    update_node_in_map(&mut score_per_node, parent_node.index(), up_score / 2);
                 }
                 _ => ()
             }
@@ -113,7 +113,7 @@ fn count_words(text: &String) -> usize {
 
 fn update_node_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) {
     let default_value: usize = 0;
-    let mut current_score = score_per_node.get(&node_index).unwrap_or(&default_value);
+    let current_score = score_per_node.get(&node_index).unwrap_or(&default_value);
     score_per_node.insert(node_index, current_score + increment);
 }
 
@@ -161,30 +161,29 @@ pub fn get_cleaned_text_and_links(node: Node, lang: &str) -> (String, Vec<String
     return (text, links);
 }
 
-fn get_removed_nodes(node: Node) -> HashSet<usize> {
-    let mut removed_nodes: HashSet<usize> = HashSet::new();
-    let mut text = String::new();
+fn get_removed_nodes(node: Node) -> Vec<usize> {
+    let mut removed_nodes: Vec<usize> = Vec::new();
     for child in node.children() {
         if !child.is(Name("p")) {
             let child_text = child.text();
             if !is_high_density_link(&child, count_words(&child_text)) {
-                removed_nodes.insert(child.index());
+                removed_nodes.push(child.index());
                 for descendant in child.descendants() {
-                    removed_nodes.insert(descendant.index());
+                    removed_nodes.push(descendant.index());
                 }
             } else {
                 let sub_paragraphes = child.find(Name("p"));
                 if !child.is(Name("td")) && sub_paragraphes.size_hint().1.unwrap_or(0) == 0 {
-                    removed_nodes.insert(child.index());
+                    removed_nodes.push(child.index());
                     for descendant in child.descendants() {
-                        removed_nodes.insert(descendant.index());
+                        removed_nodes.push(descendant.index());
                     }
                 } else {
                     for sub_paragraph in sub_paragraphes {
                         if sub_paragraph.text().len() < 25 {
-                            removed_nodes.insert(sub_paragraph.index());
+                            removed_nodes.push(sub_paragraph.index());
                             for descendant in sub_paragraph.descendants() {
-                                removed_nodes.insert(descendant.index());
+                                removed_nodes.push(descendant.index());
                             }
                         }
                     }
