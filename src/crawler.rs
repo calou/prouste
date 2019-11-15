@@ -81,7 +81,7 @@ pub fn pre_process(raw_html: String) -> Option<Document> {
     return Some(document);
 }
 
-fn crawl(raw_html: String) -> (Article, String) {
+pub fn crawl(raw_html: String) -> (Article, String) {
     let option = pre_process(raw_html);
     return match option {
         Some(html) => {
