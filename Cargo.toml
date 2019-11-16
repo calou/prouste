@@ -1,5 +1,5 @@
 [package]
-name = "rust-goose"
+name = "prouste"
 version = "0.1.0"
 authors = ["Sébastien Gruchet <sebastien.gruchet@digimind.com>"]
 include = ["src/**/*", "test/**/*", "Cargo.toml"]
