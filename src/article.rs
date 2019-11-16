@@ -1,4 +1,3 @@
-use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, Default)]
 pub struct Article {
@@ -15,5 +14,14 @@ pub struct Article {
 impl Article {
     pub fn new() -> Self {
         Self::default()
+    }
+    pub fn title(self: Self) -> String {
+        self.title
+    }
+    pub fn language(self: Self) -> String {
+        self.language
+    }
+    pub fn text(self: Self) -> String {
+        self.text
     }
 }
