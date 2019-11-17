@@ -2,7 +2,6 @@
 use std::collections::{HashMap};
 
 use std::vec::Vec;
-
 use select::document::Document;
 use select::predicate::{Name, Predicate};
 use unicode_segmentation::UnicodeSegmentation;

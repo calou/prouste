@@ -4,10 +4,9 @@ mod text;
 mod content;
 mod predicate;
 mod stopwords;
+mod embed;
 
 pub mod extractor {
-    
-
     use select::document::Document;
 
     use crate::extractor::content::{get_cleaned_text_and_links, get_top_node};
