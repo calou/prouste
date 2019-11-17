@@ -1,29 +1,37 @@
+
 extern crate stopwords;
 use stopwords::{Language, NLTK, Stopwords};
-use std::collections::HashSet;
-
+use std::collections::{HashSet,HashMap};
 use unicode_segmentation::UnicodeSegmentation;
 
-fn get_stopwords_from_language(lang: &str) -> HashSet<&&str> {
-    return match lang {
-        "en" => NLTK::stopwords(Language::English).unwrap().iter().collect(),
-        "fr" => NLTK::stopwords(Language::French).unwrap().iter().collect(),
-        "de" => NLTK::stopwords(Language::German).unwrap().iter().collect(),
-        "es" => NLTK::stopwords(Language::Spanish).unwrap().iter().collect(),
-        "sw" => NLTK::stopwords(Language::Swedish).unwrap().iter().collect(),
-        "it" => NLTK::stopwords(Language::Italian).unwrap().iter().collect(),
-        "pt" => NLTK::stopwords(Language::Portuguese).unwrap().iter().collect(),
-        "ru" => NLTK::stopwords(Language::Russian).unwrap().iter().collect(),
-        "nl" => NLTK::stopwords(Language::Dutch).unwrap().iter().collect(),
-        "fi" => NLTK::stopwords(Language::Finnish).unwrap().iter().collect(),
+lazy_static! {
+    static ref HASHMAP: HashMap< &'static str, HashSet<&'static &'static str>> = {
+        let mut m = HashMap::new();
+        m.insert("en", NLTK::stopwords(Language::English).unwrap().iter().collect());
+        m.insert("fr", NLTK::stopwords(Language::French).unwrap().iter().collect());
+        m.insert("de", NLTK::stopwords(Language::German).unwrap().iter().collect());
+        m.insert("es", NLTK::stopwords(Language::Spanish).unwrap().iter().collect());
+        m.insert("sw", NLTK::stopwords(Language::Swedish).unwrap().iter().collect());
+        m.insert("it", NLTK::stopwords(Language::Italian).unwrap().iter().collect());
+        m.insert("pt", NLTK::stopwords(Language::Portuguese).unwrap().iter().collect());
+        m.insert("ru", NLTK::stopwords(Language::Russian).unwrap().iter().collect());
+        m.insert("nl", NLTK::stopwords(Language::Dutch).unwrap().iter().collect());
+        m.insert("fi", NLTK::stopwords(Language::Finnish).unwrap().iter().collect());
+       
+        m
+    };
+}
+
+fn get_stopwords_from_language(lang: &str) -> HashSet<&'static &'static str> {
+    return match HASHMAP.get(lang){
+        Some(sw) => sw.to_owned(),
         _ => HashSet::new()
     };
 }
 
-
 fn count_max_stopwords(text: &String, _lang: &str, n: usize) -> usize {
     let unicode_words = text.as_str().unicode_words();
-    let stopwords: HashSet<_> = get_stopwords_from_language("en");
+    let stopwords: HashSet<_> = get_stopwords_from_language(_lang);
     let mut nb_stopwords: usize = 0;
     for word in unicode_words.into_iter() {
         if nb_stopwords > (n) as usize {
