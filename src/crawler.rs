@@ -176,4 +176,14 @@ mod tests {
         assert_eq!(article.title, "Khánh Ly đến viếng mộ Trịnh Công Sơn - VnExpress Giải Trí");
         assert_eq!(article.language, "vi");
     }
+
+    #[test]
+    fn test_crawl_closermag() {
+        let raw_html = fs::read_to_string("src/extractor/sites/closermag.fr.html")
+            .expect("Something went wrong reading the file");
+
+        let (article, _) = crawl(raw_html);
+        println!("{}", article.text);
+    }
+
 }
