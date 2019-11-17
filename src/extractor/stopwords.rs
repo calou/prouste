@@ -21,7 +21,7 @@ fn get_stopwords_from_language(lang: &str) -> HashSet<&&str> {
 }
 
 
-fn count_max_stopwords(text: &String, lang: &str, n: usize) -> usize {
+fn count_max_stopwords(text: &String, _lang: &str, n: usize) -> usize {
     let unicode_words = text.as_str().unicode_words();
     let stopwords: HashSet<_> = get_stopwords_from_language("en");
     let mut nb_stopwords: usize = 0;

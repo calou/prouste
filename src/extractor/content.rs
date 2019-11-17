@@ -1,10 +1,10 @@
-use std::borrow::Borrow;
-use std::collections::{HashMap, HashSet, BTreeSet};
-use std::iter::FromIterator;
+
+use std::collections::{HashMap};
+
 use std::vec::Vec;
 
 use select::document::Document;
-use select::predicate::{Attr, Name, Predicate};
+use select::predicate::{Name, Predicate};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
@@ -50,7 +50,7 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 
             let grandparent_node = parent_node.parent();
             match grandparent_node {
-                Some(gp) => {
+                Some(_gp) => {
                     update_node_in_map(&mut score_per_node, parent_node.index(), up_score / 2);
                 }
                 _ => ()
@@ -136,7 +136,7 @@ fn get_base_paragraph_score(node: Node, lang: &str) -> usize {
     }
 }
 
-pub fn get_cleaned_text_and_links(node: Node, lang: &str) -> (String, Vec<String>){
+pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>){
     let excluded_nodes = get_removed_nodes(node);
 
     let mut text = String::new();
@@ -206,7 +206,7 @@ mod tests {
     fn test_get_cleaned_text_and_links() {
         let document = Document::from(include_str!("sites/theguardian.com.html"));
         let option = get_top_node(&document, "en").unwrap();
-        let (text, links) = get_cleaned_text_and_links(option, "en");
+        let (text, _links) = get_cleaned_text_and_links(option, "en");
         println!("{}", text);
     }
 
@@ -214,7 +214,7 @@ mod tests {
     fn test_get_cleaned_text_and_links_techcrunch() {
         let document = Document::from(include_str!("sites/techcrunch.com.html"));
         let option = get_top_node(&document, "en").unwrap();
-        let (text, links) = get_cleaned_text_and_links(option, "en");
+        let (text, _links) = get_cleaned_text_and_links(option, "en");
         println!("{}", text);
     }
 

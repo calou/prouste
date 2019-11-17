@@ -6,7 +6,7 @@ mod predicate;
 mod stopwords;
 
 pub mod extractor {
-    use std::collections::BTreeSet;
+    
 
     use select::document::Document;
 

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap};
 use std::string::String;
 
 use select::document::Document;
