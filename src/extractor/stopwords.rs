@@ -5,7 +5,7 @@ use std::collections::{HashSet,HashMap};
 use unicode_segmentation::UnicodeSegmentation;
 
 lazy_static! {
-    static ref HASHMAP: HashMap< &'static str, HashSet<&'static &'static str>> = {
+    static ref HASHMAP: HashMap< &'static str, Vec<&'static str>> = {
         let mut m = HashMap::new();
         m.insert("en", stopwords_from_language(Language::English));
         m.insert("fr", stopwords_from_language(Language::French));
@@ -22,32 +22,39 @@ lazy_static! {
     };
 }
 
-#[inline(always)]
-fn stopwords_from_language(lang: Language) -> HashSet<&'static &'static str> {
+//#[inline(always)]
+fn stopwords_from_language(lang: Language) -> Vec<&'static str> {
     return match NLTK::stopwords(lang){
-        Some(sw) => sw.iter().collect(),
-        _ => HashSet::new()
-    };
+        Some(sw) => {
+            let mut stopwords = sw.to_vec();
+            stopwords.sort();
+            let vec = stopwords.clone();
+            return vec.clone();
+        },
+        _ => Vec::new()
+    }
 }
 
-fn get_stopwords_from_language(lang: &str) -> HashSet<&'static &'static str> {
+fn get_stopwords_from_language(lang: &str) -> Vec<&'static str> {
     return match HASHMAP.get(lang){
-        Some(sw) => sw.to_owned(),
-        _ => HashSet::new()
+        Some(sw) => sw.to_vec(),
+        _ => Vec::default()
     };
 }
 
 #[inline(always)]
 fn count_max_stopwords(text: &String, _lang: &str, n: usize) -> usize {
-    let unicode_words = text.as_str().unicode_words();
-    let stopwords: HashSet<_> = get_stopwords_from_language(_lang);
+    let lowercased_text = text.as_str().to_ascii_lowercase();
+    let unicode_words = lowercased_text.unicode_words();
+    let stopwords: Vec<_> = get_stopwords_from_language(_lang);
     let mut nb_stopwords: usize = 0;
     for word in unicode_words.into_iter() {
-        if nb_stopwords > (n) as usize {
-            return nb_stopwords;
-        }
-        if stopwords.contains(&word.to_ascii_lowercase().as_str()) {
+        let result = stopwords.binary_search(&&word);
+        if result.is_ok() {
             nb_stopwords += 1;
+            if nb_stopwords > (n) as usize {
+                return nb_stopwords;
+            }
         }
     }
     return nb_stopwords;
