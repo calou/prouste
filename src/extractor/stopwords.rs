@@ -7,18 +7,26 @@ use unicode_segmentation::UnicodeSegmentation;
 lazy_static! {
     static ref HASHMAP: HashMap< &'static str, HashSet<&'static &'static str>> = {
         let mut m = HashMap::new();
-        m.insert("en", NLTK::stopwords(Language::English).unwrap().iter().collect());
-        m.insert("fr", NLTK::stopwords(Language::French).unwrap().iter().collect());
-        m.insert("de", NLTK::stopwords(Language::German).unwrap().iter().collect());
-        m.insert("es", NLTK::stopwords(Language::Spanish).unwrap().iter().collect());
-        m.insert("sw", NLTK::stopwords(Language::Swedish).unwrap().iter().collect());
-        m.insert("it", NLTK::stopwords(Language::Italian).unwrap().iter().collect());
-        m.insert("pt", NLTK::stopwords(Language::Portuguese).unwrap().iter().collect());
-        m.insert("ru", NLTK::stopwords(Language::Russian).unwrap().iter().collect());
-        m.insert("nl", NLTK::stopwords(Language::Dutch).unwrap().iter().collect());
-        m.insert("fi", NLTK::stopwords(Language::Finnish).unwrap().iter().collect());
+        m.insert("en", stopwords_from_language(Language::English));
+        m.insert("fr", stopwords_from_language(Language::French));
+        m.insert("de", stopwords_from_language(Language::German));
+        m.insert("es", stopwords_from_language(Language::Spanish));
+        m.insert("sw", stopwords_from_language(Language::Swedish));
+        m.insert("it", stopwords_from_language(Language::Italian));
+        m.insert("pt", stopwords_from_language(Language::Portuguese));
+        m.insert("ru", stopwords_from_language(Language::Russian));
+        m.insert("nl", stopwords_from_language(Language::Dutch));
+        m.insert("fi", stopwords_from_language(Language::Finnish));
        
         m
+    };
+}
+
+#[inline(always)]
+fn stopwords_from_language(lang: Language) -> HashSet<&'static &'static str> {
+    return match NLTK::stopwords(lang){
+        Some(sw) => sw.iter().collect(),
+        _ => HashSet::new()
     };
 }
 
