@@ -2,12 +2,15 @@
 #[macro_use]
 extern crate lazy_static;
 extern crate test;
+extern crate select;
 
 pub mod article;
-pub mod crawler;
+pub mod configuration;
+pub mod html;
+mod embedding;
+mod crawler;
 mod charset;
 mod extractor;
-
 
 #[cfg(test)]
 mod tests {

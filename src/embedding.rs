@@ -1,16 +1,17 @@
+
 use regex::Regex;
 use select::document::Document;
-use select::predicate::{Name, Predicate, Text};
+use select::predicate::{Name, Predicate, Text, Attr};
 
 use super::select::predicate::{Child, Class};
 
 #[derive(PartialEq, Debug, Clone, Default)]
-pub(crate) struct Embedding {
-    pub(crate) url: String,
-    pub(crate) text: String,
+pub struct Embedding {
+    pub url: String,
+    pub text: String,
 }
 
-fn get_tweets(document: &Document) -> Vec<Embedding> {
+pub fn get_tweets(document: &Document) -> Vec<Embedding> {
     let mut embeddings: Vec<Embedding> = Vec::new();
     for tag in document.find(Name("blockquote").and(Class("twitter-tweet"))) {
         let mut text: String = String::default();
@@ -30,7 +31,7 @@ fn get_tweets(document: &Document) -> Vec<Embedding> {
 }
 
 
-fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
+pub fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
     let mut embeddings: Vec<Embedding> = Vec::new();
     let re = Regex::new(r"\s\s+").unwrap();
     for tag in document.find(Name("blockquote").and(Class("instagram-media"))) {
@@ -46,7 +47,24 @@ fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
     }
     return embeddings;
 }
-
+/*
+pub(crate) fn get_youtube_videos(document: &Document) -> Vec<Embedding> {
+    let mut embeddings: Vec<Embedding> = Vec::new();
+    let re = Regex::new(r"\s\s+").unwrap();
+    for tag in document.find(Name("iframe").and(Attr("data-provider", "youtube"))) {
+        match tag.find(Child(Name("p"), Name("a"))).next() {
+            Some(node) => {
+                embeddings.push(Embedding {
+                    url: String::from(node.attr("src").unwrap_or("")),
+                    text:  String::from(node.attr("data-title").unwrap_or("")),
+                });
+            }
+            _ => ()
+        }
+    }
+    return embeddings;
+}
+*/
 
 #[cfg(test)]
 mod tests {
@@ -55,19 +73,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn get_tweets_lemonde() {
-        let document = Document::from(include_str!("sites/lemonde.fr.html"));
-        let tweets = get_tweets(&document);
-
-        assert_eq!(tweets.len(), 2);
-        let tweet = tweets.get(1).unwrap();
-        assert_eq!(tweet.url, "//twitter.com/pibzedog/status/1196112642324254720");
-        assert_eq!(tweet.text, "La Maison du peuple de la Flèche d’Or a été vidée. La police est partie. Dedans, des vigiles, dehors, la foule d’un… https://t.co/uH0KEcAQ4L");
-    }
-
-    #[test]
     fn get_tweets_telegraph() {
-        let document = Document::from(include_str!("sites/telegraph.co.uk.html"));
+        let document = Document::from(include_str!("extractor/sites/telegraph.co.uk.html"));
         let tweets = get_tweets(&document);
 
         assert_eq!(tweets.len(), 35);
@@ -78,7 +85,7 @@ mod tests {
 
     #[test]
     fn get_instagram_posts_telegraph() {
-        let document = Document::from(include_str!("sites/telegraph.co.uk.html"));
+        let document = Document::from(include_str!("extractor/sites/telegraph.co.uk.html"));
 
         let instagram_posts = get_instagram_posts(&document);
         assert_eq!(instagram_posts.len(), 5);
@@ -86,4 +93,15 @@ mod tests {
         assert_eq!(post.url, "https://www.instagram.com/p/BHA-BtNh3h1/");
         assert_eq!(post.text, "#besmart pay attention and work hard to buy @chanelofficial #remain where's Sunderland? Does Sarah Palin live there? Lol");
     }
+/*
+    #[test]
+    fn get_youtube_videos() {
+        let document = Document::from(include_str!("sites/figaro.fr.html"));
+
+        let videos = get_instagram_posts(&document);
+        assert_eq!(videos.len(), 5);
+        let video = videos.get(0).unwrap();
+        assert_eq!(video.url, "https://www.instagram.com/p/BHA-BtNh3h1/");
+        assert_eq!(video.text, "#besmart pay attention and work hard to buy @chanelofficial #remain where's Sunderland? Does Sarah Palin live there? Lol");
+    }*/
 }

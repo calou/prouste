@@ -4,7 +4,6 @@ mod text;
 mod content;
 mod predicate;
 mod stopwords;
-mod embed;
 
 pub mod extractor {
     use select::document::Document;
