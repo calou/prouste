@@ -1,11 +1,11 @@
-use std::borrow::Borrow;
+
 
 use select::document::Document;
 
 use crate::article::{Article, Embeddings};
 use crate::configuration::Configuration;
 use crate::embedding::*;
-use crate::embedding::Embedding;
+
 
 use crate::extractor::extractor::*;
 

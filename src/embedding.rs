@@ -1,7 +1,7 @@
 
 use regex::Regex;
 use select::document::Document;
-use select::predicate::{Name, Predicate, Text, Attr};
+use select::predicate::{Name, Predicate};
 
 use super::select::predicate::{Child, Class};
 

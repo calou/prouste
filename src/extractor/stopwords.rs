@@ -1,7 +1,7 @@
 
 extern crate stopwords;
 use stopwords::{Language, NLTK, Stopwords};
-use std::collections::{HashSet,HashMap};
+use std::collections::{HashMap};
 use unicode_segmentation::UnicodeSegmentation;
 
 lazy_static! {
