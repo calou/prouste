@@ -10,6 +10,7 @@ edition = "2018"
 [dependencies]
 select = "0.4.3"
 encoding = "0.2"
+chardet = "0.2"
 unicode-segmentation = "1.6.0"
 stopwords = "0.1.0"
 serde_json = "1.0"

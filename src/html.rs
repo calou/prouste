@@ -6,8 +6,12 @@ use crate::article::{Article, Embeddings};
 use crate::configuration::Configuration;
 use crate::embedding::*;
 
-
 use crate::extractor::extractor::*;
+use encoding::{Encoding, DecoderTrap};
+use encoding::all::UTF_8;
+
+use chardet::{detect, charset2encoding};
+use encoding::label::encoding_from_whatwg_label;
 
 fn add_spaces_between_tags(text: String) -> String {
     return text.replace("<img ", "\n<img ")
@@ -58,10 +62,31 @@ pub struct HtmlExtractor {
 }
 
 impl HtmlExtractor {
-    pub fn extract(self: &Self, raw_html: String) -> Option<Article> {
+    pub fn from_string(self: &Self, raw_html: String) -> Option<Article> {
         let option = pre_process(raw_html);
         return match option {
             Some(document) => process(&document, &self.configuration),
+            _ => None
+        };
+    }
+
+    pub fn from_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
+        return match Document::from_read(::std::io::Cursor::new(bytes.to_owned())){
+            Ok(document) => process(&document, &self.configuration),
+            _ => self.from_non_utf8_bytes(bytes)
+        }
+    }
+
+    fn from_non_utf8_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
+        let result = detect(&bytes);
+        return match encoding_from_whatwg_label(charset2encoding(&result.0)) {
+            Some(encoding) => {
+                let utf8reader = encoding.decode(&bytes, DecoderTrap::Ignore).expect("Error");
+                return match pre_process(utf8reader){
+                    Some(document) => process(&document, &self.configuration),
+                    _ => None
+                };
+            }
             _ => None
         };
     }
@@ -85,12 +110,12 @@ mod tests {
 
     #[test]
     fn test_crawl_abc() {
-        let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
-            .expect("Something went wrong reading the file");
-
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
-        let option = extractor.extract(raw_html);
+
+        let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
+            .expect("Something went wrong reading the file");
+        let option = extractor.from_string(raw_html);
         let article = option.unwrap();
         assert_eq!(article.title, "New Jersey Devils Owner Apologizes After Landing Helicopter in Middle of Kids' Soccer Game Forces Cancellation - ABC News");
         assert_eq!(article.canonical_link, "http://abcnews.go.com/US/nj-devils-owner-apologizes-landing-helicopter-middle-kids/story?id=35155591");
@@ -103,24 +128,24 @@ mod tests {
 
     #[test]
     fn test_crawl_bizjournal() {
-        let raw_html = fs::read_to_string("src/extractor/sites/bizjournals.com.html")
-            .expect("Something went wrong reading the file");
-
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
-        let option = extractor.extract(raw_html);
+
+        let raw_html = fs::read_to_string("src/extractor/sites/bizjournals.com.html")
+            .expect("Something went wrong reading the file");
+        let option = extractor.from_string(raw_html);
         let article = option.unwrap();
         assert_eq!(article.favico, "http://assets.bizjournals.com/lib/img/favicon.ico");
     }
 
     #[test]
     fn test_crawl_vnexpress() {
-        let raw_html = fs::read_to_string("src/extractor/sites/vnexpress.net.html")
-            .expect("Something went wrong reading the file");
-
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
-        let option = extractor.extract(raw_html);
+
+        let raw_html = fs::read_to_string("src/extractor/sites/vnexpress.net.html")
+            .expect("Something went wrong reading the file");
+        let option = extractor.from_string(raw_html);
         let article = option.unwrap();
         assert_eq!(article.title, "Khánh Ly đến viếng mộ Trịnh Công Sơn - VnExpress Giải Trí");
         assert_eq!(article.language, "vi");
@@ -128,24 +153,24 @@ mod tests {
 
     #[test]
     fn test_crawl_closermag() {
-        let raw_html = fs::read_to_string("src/extractor/sites/closermag.fr.html")
-            .expect("Something went wrong reading the file");
-
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
-        let option = extractor.extract(raw_html);
+
+        let raw_html = fs::read_to_string("src/extractor/sites/closermag.fr.html")
+            .expect("Something went wrong reading the file");
+        let option = extractor.from_string(raw_html);
         println!("{}", option.unwrap().text);
     }
 
 
     #[test]
     fn test_crawl_charset_koi8_r() {
-        let raw_html = fs::read_to_string("src/extractor/sites/charset_koi8_r.html")
-            .expect("Something went wrong reading the file");
-
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
-        let option = extractor.extract(raw_html);
+
+        let raw_content = fs::read("src/extractor/sites/charset_koi8_r.html")
+            .expect("Something went wrong reading the file");
+        let option = extractor.from_bytes(raw_content);
         println!("{}", option.unwrap().text);
     }
 }

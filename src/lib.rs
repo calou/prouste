@@ -3,6 +3,7 @@
 extern crate lazy_static;
 extern crate test;
 extern crate select;
+extern crate chardet;
 
 pub mod article;
 pub mod configuration;
@@ -28,7 +29,7 @@ mod tests {
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
         let ptr = raw_html.as_str();
-        b.iter(|| extractor.extract(String::from(ptr)));
+        b.iter(|| extractor.from_string(String::from(ptr)));
     }
 
     #[bench]
@@ -38,7 +39,7 @@ mod tests {
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
         let ptr = raw_html.as_str();
-        b.iter(|| extractor.extract(String::from(ptr)));
+        b.iter(|| extractor.from_string(String::from(ptr)));
     }
 
 
@@ -49,6 +50,16 @@ mod tests {
         let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
         let extractor = HtmlExtractor { configuration };
         let ptr = raw_html.as_str();
-        b.iter(|| extractor.extract(String::from(ptr)));
+        b.iter(|| extractor.from_string(String::from(ptr)));
+    }
+
+    #[bench]
+    fn bench_crawl_charset_koi8_r(b: &mut Bencher) {
+        let raw_content = fs::read("src/extractor/sites/charset_koi8_r.html")
+            .expect("Something went wrong reading the file");
+
+        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let extractor = HtmlExtractor { configuration };
+        b.iter(|| extractor.from_bytes(raw_content.to_vec()));
     }
 }
