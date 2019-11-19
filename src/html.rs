@@ -8,7 +8,7 @@ use crate::embedding::*;
 
 use crate::extractor::extractor::*;
 use encoding::{Encoding, DecoderTrap};
-use encoding::all::UTF_8;
+
 
 use chardet::{detect, charset2encoding};
 use encoding::label::encoding_from_whatwg_label;
