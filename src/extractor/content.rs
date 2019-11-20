@@ -45,12 +45,12 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 
             let up_score = count_stopwords(text, lang) + (boost_score) as usize;
             let parent_node = document.nth(*node_index).unwrap().parent().unwrap();
-            update_node_in_map(&mut score_per_node, parent_node.index(), up_score);
+            update_node_score_in_map(&mut score_per_node, parent_node.index(), up_score);
 
             let grandparent_node = parent_node.parent();
             match grandparent_node {
                 Some(_gp) => {
-                    update_node_in_map(&mut score_per_node, parent_node.index(), up_score / 2);
+                    update_node_score_in_map(&mut score_per_node, parent_node.index(), up_score / 2);
                 }
                 _ => ()
             }
@@ -110,9 +110,9 @@ fn count_words(text: &String) -> usize {
     return text.as_str().unicode_words().count();
 }
 
-fn update_node_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) {
-    let default_value: usize = 0;
-    let current_score = score_per_node.get(&node_index).unwrap_or(&default_value);
+const DEFAULT_NODE_SCORE: usize = 0;
+fn update_node_score_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) {
+    let current_score = score_per_node.get(&node_index).unwrap_or(&DEFAULT_NODE_SCORE);
     score_per_node.insert(node_index, current_score + increment);
 }
 

@@ -62,4 +62,15 @@ mod tests {
         let extractor = HtmlExtractor { configuration };
         b.iter(|| extractor.from_bytes(raw_content.to_vec()));
     }
+
+    #[bench]
+    fn bench_crawl_telegraph(b: &mut Bencher) {
+        let raw_content = fs::read("src/extractor/sites/telegraph.co.uk.html")
+            .expect("Something went wrong reading the file");
+
+        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let extractor = HtmlExtractor { configuration };
+        b.iter(|| extractor.from_bytes(raw_content.to_vec()));
+    }
+
 }

@@ -7,7 +7,7 @@ use crate::configuration::Configuration;
 use crate::embedding::*;
 
 use crate::extractor::extractor::*;
-use encoding::{Encoding, DecoderTrap};
+use encoding::DecoderTrap;
 
 
 use chardet::{detect, charset2encoding};

@@ -4,6 +4,12 @@ use select::document::Document;
 use select::predicate::{Name, Predicate};
 
 use super::select::predicate::{Child, Class};
+use select::node::Node;
+
+lazy_static!{
+    static ref SPACES_REGEX: Regex = Regex::new(r"\s\s+").unwrap();
+}
+
 
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct Embedding {
@@ -16,13 +22,12 @@ pub fn get_tweets(document: &Document) -> Vec<Embedding> {
     for tag in document.find(Name("blockquote").and(Class("twitter-tweet"))) {
         let mut text: String = String::default();
         let mut url: String = String::default();
-        let re = Regex::new(r"\s\s+").unwrap();
         match tag.find(Name("p")).next() {
-            Some(node) => text = String::from(re.replace_all(node.text().trim(), " ")),
+            Some(node) => text = get_sanitized_text(node),
             _ => ()
         }
         match tag.find(Child(Name("blockquote"), Name("a"))).next() {
-            Some(node) => url = String::from(node.attr("href").unwrap_or("")),
+            Some(node) => url = get_href(node),
             _ => ()
         }
         embeddings.push(Embedding { url, text })
@@ -33,19 +38,26 @@ pub fn get_tweets(document: &Document) -> Vec<Embedding> {
 
 pub fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
     let mut embeddings: Vec<Embedding> = Vec::new();
-    let re = Regex::new(r"\s\s+").unwrap();
     for tag in document.find(Name("blockquote").and(Class("instagram-media"))) {
         match tag.find(Child(Name("p"), Name("a"))).next() {
             Some(node) => {
                 embeddings.push(Embedding {
-                    url: String::from(node.attr("href").unwrap_or("")),
-                    text:  String::from(re.replace_all(node.text().trim(), " ")),
+                    url: get_href(node),
+                    text: get_sanitized_text(node),
                 });
             }
             _ => ()
         }
     }
     return embeddings;
+}
+
+fn get_href(node: Node) -> String {
+    String::from(node.attr("href").unwrap_or(""))
+}
+
+fn get_sanitized_text(node: Node) -> String {
+    String::from(SPACES_REGEX.replace_all(node.text().trim(), " "))
 }
 /*
 pub(crate) fn get_youtube_videos(document: &Document) -> Vec<Embedding> {
