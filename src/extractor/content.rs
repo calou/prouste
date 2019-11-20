@@ -53,7 +53,7 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
             let grandparent_node = parent_node.parent();
             match grandparent_node {
                 Some(_gp) => {
-                    let index = parent_node.index();
+                    let index = _gp.index();
                     let new_score = calculate_node_score_in_map(score_per_node.borrow_mut(), index, up_score / 2);
                     score_per_node.insert(index, new_score);
                 }
@@ -125,13 +125,13 @@ fn calculate_node_score_in_map(score_per_node: &mut HashMap<usize, usize>, node_
 pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
     let excluded_nodes = get_removed_nodes(node);
 
-    let mut text = String::new();
+    let mut text = String::with_capacity(2000);
     let mut links: Vec<String> = Vec::new();
     for descendant in node.descendants() {
         if !excluded_nodes.contains(&descendant.index()) {
             if descendant.children().count() == 0 {
                 text.push_str(descendant.text().as_str());
-                if descendant.parent().unwrap().is(Name("p")) {
+                if descendant.is(Name("p")) {
                     text.push('\n');
                 }
             }
