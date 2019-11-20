@@ -1,7 +1,7 @@
-
-use std::collections::{HashMap};
-
+use std::borrow::BorrowMut;
+use std::collections::HashMap;
 use std::vec::Vec;
+
 use select::document::Document;
 use select::predicate::{Name, Predicate};
 use unicode_segmentation::UnicodeSegmentation;
@@ -45,12 +45,17 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 
             let up_score = count_stopwords(text, lang) + (boost_score) as usize;
             let parent_node = document.nth(*node_index).unwrap().parent().unwrap();
-            update_node_score_in_map(&mut score_per_node, parent_node.index(), up_score);
+
+            let index = parent_node.index();
+            let new_score = calculate_node_score_in_map(score_per_node.borrow_mut(), index, up_score);
+            score_per_node.insert(index, new_score);
 
             let grandparent_node = parent_node.parent();
             match grandparent_node {
                 Some(_gp) => {
-                    update_node_score_in_map(&mut score_per_node, parent_node.index(), up_score / 2);
+                    let index = parent_node.index();
+                    let new_score = calculate_node_score_in_map(score_per_node.borrow_mut(), index, up_score / 2);
+                    score_per_node.insert(index, new_score);
                 }
                 _ => ()
             }
@@ -111,46 +116,28 @@ fn count_words(text: &String) -> usize {
 }
 
 const DEFAULT_NODE_SCORE: usize = 0;
-fn update_node_score_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) {
+
+fn calculate_node_score_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) -> usize {
     let current_score = score_per_node.get(&node_index).unwrap_or(&DEFAULT_NODE_SCORE);
-    score_per_node.insert(node_index, current_score + increment);
+    return current_score + increment;
 }
 
-
-fn get_base_paragraph_score(node: Node, lang: &str) -> usize {
-    let mut number_of_paragraphes = 0usize;
-    let mut number_of_stopwords = 0usize;
-    for paragrah in node.find(Name("p")) {
-        let paragraph_text = paragrah.text();
-        let word_count = count_words(&paragraph_text);
-        if has_more_stopwords_than(&paragraph_text, lang, 2) && !is_high_density_link(&paragrah, word_count) {
-            number_of_stopwords += count_stopwords(&paragraph_text, lang);
-            number_of_paragraphes += 1;
-        }
-    }
-    if number_of_paragraphes > 0 {
-        return number_of_stopwords / number_of_paragraphes;
-    } else {
-        return 10000usize;
-    }
-}
-
-pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>){
+pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
     let excluded_nodes = get_removed_nodes(node);
 
     let mut text = String::new();
-    let mut links : Vec<String> = Vec::new();
-    for descendant in node.descendants(){
-        if!excluded_nodes.contains(&descendant.index()){
+    let mut links: Vec<String> = Vec::new();
+    for descendant in node.descendants() {
+        if !excluded_nodes.contains(&descendant.index()) {
             if descendant.children().count() == 0 {
-                text.push_str( descendant.text().as_str() );
-                if descendant.parent().unwrap().is(Name("p")){
+                text.push_str(descendant.text().as_str());
+                if descendant.parent().unwrap().is(Name("p")) {
                     text.push('\n');
                 }
             }
 
-            for l in descendant.find(Name("a")){
-                match l.attr("href"){
+            for l in descendant.find(Name("a")) {
+                match l.attr("href") {
                     Some(l) => links.push(String::from(l)),
                     _ => ()
                 };
@@ -194,7 +181,6 @@ fn get_removed_nodes(node: Node) -> Vec<usize> {
 }
 
 
-
 #[cfg(test)]
 mod tests {
     use select::document::Document;
@@ -224,22 +210,11 @@ mod tests {
     }
 
     #[test]
-    fn test_get_base_paragraph_score() {
-        let document = Document::from(include_str!("sites/theguardian.com.html"));
-        let node = get_top_node(&document, "en").unwrap();
-        let score = get_base_paragraph_score(node, "en");
-        assert!(score > 0);
-        assert!(score < 10000);
-        println!("score = {}", score);
-    }
-
-
-    #[test]
     fn test_removed_nodes() {
         let document = Document::from(include_str!("sites/theguardian.com.html"));
         let node = get_top_node(&document, "en").unwrap();
         let removed_nodes = get_removed_nodes(node);
-        for i in removed_nodes.iter(){
+        for i in removed_nodes.iter() {
             println!("Removed node : {}", document.nth(*i).unwrap().text());
         }
     }

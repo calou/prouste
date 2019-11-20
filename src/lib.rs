@@ -42,7 +42,6 @@ mod tests {
         b.iter(|| extractor.from_string(String::from(ptr)));
     }
 
-
     #[bench]
     fn bench_crawl_inc(b: &mut Bencher) {
         let raw_html = fs::read_to_string("src/extractor/sites/inc.com.html")
