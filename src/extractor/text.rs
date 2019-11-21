@@ -118,7 +118,6 @@ impl TextExtractor for TopImageExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
         let mut counts = BTreeMap::new();
         for node in document.find(ImageTag {}).into_iter() {
-            println!("matching {} ", node.html());
             match node.name() {
                 Some("meta") => {
                     match node.attr("name") {
@@ -151,7 +150,6 @@ impl TextExtractor for TopImageExtractor {
         let mut opt: Option<String> = None;
         let mut max_count = 0u32;
         for (img, c) in counts.iter() {
-            println!("{} - {}", c, img);
             if *c > max_count {
                 opt = Some(img.to_owned());
                 max_count = *c;
