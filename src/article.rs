@@ -1,18 +1,20 @@
 use crate::embedding::Embedding;
+use serde::{Serialize, Deserialize};
 
-#[derive(PartialEq, Debug, Clone, Default)]
+#[derive(PartialEq, Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Embeddings {
     pub tweets: Vec<Embedding>,
     pub instagram_posts: Vec<Embedding>,
 }
-
+/*
 impl Embeddings {
     pub fn new() -> Self {
         Self::default()
     }
 }
+*/
 
-#[derive(PartialEq, Debug, Clone, Default)]
+#[derive(PartialEq, Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Article {
     pub title: String,
     pub text: String,

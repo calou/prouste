@@ -4,6 +4,7 @@ extern crate lazy_static;
 extern crate test;
 extern crate select;
 extern crate chardet;
+extern crate serde;
 
 pub mod article;
 pub mod configuration;

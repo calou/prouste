@@ -1,4 +1,4 @@
-
+use serde::{Serialize, Deserialize};
 use regex::Regex;
 use select::document::Document;
 use select::predicate::{Name, Predicate};
@@ -11,7 +11,7 @@ lazy_static!{
 }
 
 
-#[derive(PartialEq, Debug, Clone, Default)]
+#[derive(PartialEq, Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Embedding {
     pub url: String,
     pub text: String,
