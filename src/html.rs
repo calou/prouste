@@ -9,24 +9,14 @@ use crate::embedding::*;
 use crate::extractor::extractor::*;
 use encoding::DecoderTrap;
 
-
 use chardet::{detect, charset2encoding};
 use encoding::label::encoding_from_whatwg_label;
-
-fn add_spaces_between_tags(text: String) -> String {
-    return text.replace("<img ", "\n<img ")
-        .replace("</blockquote>", "</blockquote>\n")
-        .replace("</li>", "</li>\n")
-        .replace("</p>", "</p>\n")
-        .replace("><", "> <");
-}
 
 fn pre_process(raw_html: String) -> Option<Document> {
     if raw_html == "" {
         return None;
     }
-    let sanitized_html = add_spaces_between_tags(raw_html);
-    let document = Document::from(sanitized_html.to_owned().as_str());
+    let document = Document::from(raw_html.to_owned().as_str());
     return Some(document);
 }
 
@@ -100,13 +90,6 @@ mod tests {
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-
-    #[test]
-    fn test_add_spaces_between_tags() {
-        let html = "<h1>Title</h1><blockquote>quote</blockquote><li>opts</li><img >";
-        let result = "<h1>Title</h1> <blockquote>quote</blockquote>\n<li>opts</li>\n\n<img >";
-        assert_eq!(add_spaces_between_tags(String::from(html)), result);
-    }
 
     #[test]
     fn test_crawl_abc() {
