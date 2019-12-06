@@ -68,8 +68,7 @@ mod tests {
         let raw_content = fs::read("src/extractor/sites/telegraph.co.uk.html")
             .expect("Something went wrong reading the file");
 
-        let configuration = Configuration::default();
-        let extractor = HtmlExtractor { configuration };
+        let extractor = HtmlExtractor::default();
         b.iter(|| extractor.from_bytes(raw_content.to_vec()));
     }
 

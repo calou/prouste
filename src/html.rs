@@ -12,6 +12,10 @@ pub struct HtmlExtractor {
     pub configuration: Configuration,
 }
 
+impl Default for HtmlExtractor {
+    fn default() -> Self { HtmlExtractor { configuration: Configuration::default() } }
+}
+
 impl HtmlExtractor {
     pub fn from_string(self: &Self, raw_html: String) -> Option<Article> {
         let option = self.pre_process(raw_html);
@@ -84,8 +88,7 @@ mod tests {
 
     #[test]
     fn test_crawl_abc() {
-        let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
-        let extractor = HtmlExtractor { configuration };
+        let extractor = HtmlExtractor::default();
 
         let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
             .expect("Something went wrong reading the file");
