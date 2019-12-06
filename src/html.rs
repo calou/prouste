@@ -8,56 +8,22 @@ use crate::configuration::Configuration;
 use crate::embedding::*;
 use crate::extractor::extractor::*;
 
-fn pre_process(raw_html: String) -> Option<Document> {
-    if raw_html == "" {
-        return None;
-    }
-    let document = Document::from(raw_html.to_owned().as_str());
-    return Some(document);
-}
-
-pub fn process(document: &Document, config: &Configuration) -> Option<Article> {
-    let mut article = Article::new();
-
-    article.language = get_language(&document);
-    if config.enable_meta_extraction {
-        article.favico = get_favico(&document);
-        article.canonical_link = get_canonical_link(&document);
-        article.meta_keywords = get_meta_keywords(&document);
-        article.top_image = get_top_image(&document);
-    }
-    if config.enable_text_extraction {
-        article.title = get_title(&document);
-        let (text, links) = get_text_and_links(&document, article.language.as_ref());
-        article.text = text;
-        article.links = links;
-    }
-    if config.enable_embeddings_extraction {
-        article.embeddings = Embeddings {
-            tweets: get_tweets(&document),
-            instagram_posts: get_instagram_posts(&document),
-        }
-    }
-    return Some(article);
-}
-
-
 pub struct HtmlExtractor {
     pub configuration: Configuration,
 }
 
 impl HtmlExtractor {
     pub fn from_string(self: &Self, raw_html: String) -> Option<Article> {
-        let option = pre_process(raw_html);
+        let option = self.pre_process(raw_html);
         return match option {
-            Some(document) => process(&document, &self.configuration),
+            Some(document) => self.process(&document, &self.configuration),
             _ => None
         };
     }
 
     pub fn from_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
         return match Document::from_read(::std::io::Cursor::new(bytes.to_owned())) {
-            Ok(document) => process(&document, &self.configuration),
+            Ok(document) => self.process(&document, &self.configuration),
             _ => self.from_non_utf8_bytes(bytes)
         };
     }
@@ -67,23 +33,53 @@ impl HtmlExtractor {
         return match encoding_from_whatwg_label(charset2encoding(&result.0)) {
             Some(encoding) => {
                 let utf8reader = encoding.decode(&bytes, DecoderTrap::Ignore).expect("Error");
-                return match pre_process(utf8reader) {
-                    Some(document) => process(&document, &self.configuration),
+                return match self.pre_process(utf8reader) {
+                    Some(document) => self.process(&document, &self.configuration),
                     _ => None
                 };
             }
             _ => None
         };
     }
+
+    fn pre_process(self: &Self, raw_html: String) -> Option<Document> {
+        if raw_html == "" {
+            return None;
+        }
+        let document = Document::from(raw_html.to_owned().as_str());
+        return Some(document);
+    }
+
+    fn process(self: &Self, document: &Document, config: &Configuration) -> Option<Article> {
+        let mut article = Article::new();
+
+        article.language = get_language(&document);
+        if config.enable_meta_extraction {
+            article.favico = get_favico(&document);
+            article.canonical_link = get_canonical_link(&document);
+            article.meta_keywords = get_meta_keywords(&document);
+            article.top_image = get_top_image(&document);
+        }
+        if config.enable_text_extraction {
+            article.title = get_title(&document);
+            let (text, links) = get_text_and_links(&document, article.language.as_ref());
+            article.text = text;
+            article.links = links;
+        }
+        if config.enable_embeddings_extraction {
+            article.embeddings = Embeddings {
+                tweets: get_tweets(&document),
+                instagram_posts: get_instagram_posts(&document),
+            }
+        }
+        return Some(article);
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::fs;
-
     use crate::configuration::Configuration;
-
-    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use std::fs;
     use super::*;
 
     #[test]
@@ -139,7 +135,6 @@ mod tests {
         let option = extractor.from_string(raw_html);
         println!("{}", option.unwrap().text);
     }
-
 
     #[test]
     fn test_crawl_charset_koi8_r() {

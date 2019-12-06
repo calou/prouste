@@ -6,13 +6,6 @@ pub struct Embeddings {
     pub tweets: Vec<Embedding>,
     pub instagram_posts: Vec<Embedding>,
 }
-/*
-impl Embeddings {
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-*/
 
 #[derive(PartialEq, Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Article {
