@@ -10,7 +10,6 @@ lazy_static!{
     static ref SPACES_REGEX: Regex = Regex::new(r"\s\s+").unwrap();
 }
 
-
 #[derive(PartialEq, Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Embedding {
     pub url: String,
@@ -19,14 +18,17 @@ pub struct Embedding {
 
 pub fn get_tweets(document: &Document) -> Vec<Embedding> {
     let mut embeddings: Vec<Embedding> = Vec::new();
-    for tag in document.find(Name("blockquote").and(Class("twitter-tweet"))) {
+    let blockquote_predicate = Name("blockquote");
+    let p_predicate = Name("p");
+    let child_link_predicate = Child(blockquote_predicate, Name("a"));
+    for tag in document.find(blockquote_predicate.and(Class("twitter-tweet"))) {
         let mut text: String = String::default();
         let mut url: String = String::default();
-        match tag.find(Name("p")).next() {
+        match tag.find(p_predicate).next() {
             Some(node) => text = get_sanitized_text(node),
             _ => ()
         }
-        match tag.find(Child(Name("blockquote"), Name("a"))).next() {
+        match tag.find(child_link_predicate).next() {
             Some(node) => url = get_href(node),
             _ => ()
         }
@@ -38,8 +40,9 @@ pub fn get_tweets(document: &Document) -> Vec<Embedding> {
 
 pub fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
     let mut embeddings: Vec<Embedding> = Vec::new();
+    let child_link_predicate = Child(Name("p"), Name("a"));
     for tag in document.find(Name("blockquote").and(Class("instagram-media"))) {
-        match tag.find(Child(Name("p"), Name("a"))).next() {
+        match tag.find(child_link_predicate).next() {
             Some(node) => {
                 embeddings.push(Embedding {
                     url: get_href(node),
