@@ -27,7 +27,7 @@ mod tests {
         let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
             .expect("Something went wrong reading the file");
 
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration::default();
         let extractor = HtmlExtractor { configuration };
         let ptr = raw_html.as_str();
         b.iter(|| extractor.from_string(String::from(ptr)));
@@ -37,7 +37,7 @@ mod tests {
     fn bench_crawl_theguardian(b: &mut Bencher) {
         let raw_html = fs::read_to_string("src/extractor/sites/theguardian.com.html")
             .expect("Something went wrong reading the file");
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration::default();
         let extractor = HtmlExtractor { configuration };
         let ptr = raw_html.as_str();
         b.iter(|| extractor.from_string(String::from(ptr)));
@@ -47,7 +47,7 @@ mod tests {
     fn bench_crawl_inc(b: &mut Bencher) {
         let raw_html = fs::read_to_string("src/extractor/sites/inc.com.html")
             .expect("Something went wrong reading the file");
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration::default();
         let extractor = HtmlExtractor { configuration };
         let ptr = raw_html.as_str();
         b.iter(|| extractor.from_string(String::from(ptr)));
@@ -58,7 +58,7 @@ mod tests {
         let raw_content = fs::read("src/extractor/sites/charset_koi8_r.html")
             .expect("Something went wrong reading the file");
 
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration::default();
         let extractor = HtmlExtractor { configuration };
         b.iter(|| extractor.from_bytes(raw_content.to_vec()));
     }
@@ -68,7 +68,7 @@ mod tests {
         let raw_content = fs::read("src/extractor/sites/telegraph.co.uk.html")
             .expect("Something went wrong reading the file");
 
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration::default();
         let extractor = HtmlExtractor { configuration };
         b.iter(|| extractor.from_bytes(raw_content.to_vec()));
     }

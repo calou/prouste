@@ -1,16 +1,12 @@
-
-
+use chardet::{charset2encoding, detect};
+use encoding::DecoderTrap;
+use encoding::label::encoding_from_whatwg_label;
 use select::document::Document;
 
 use crate::article::{Article, Embeddings};
 use crate::configuration::Configuration;
 use crate::embedding::*;
-
 use crate::extractor::extractor::*;
-use encoding::DecoderTrap;
-
-use chardet::{detect, charset2encoding};
-use encoding::label::encoding_from_whatwg_label;
 
 fn pre_process(raw_html: String) -> Option<Document> {
     if raw_html == "" {
@@ -20,29 +16,28 @@ fn pre_process(raw_html: String) -> Option<Document> {
     return Some(document);
 }
 
-
 pub fn process(document: &Document, config: &Configuration) -> Option<Article> {
     let mut article = Article::new();
 
     article.language = get_language(&document);
-    article.favico = get_favico(&document);
-    article.canonical_link = get_canonical_link(&document);
-    article.meta_keywords = get_meta_keywords(&document);
-    article.top_image = get_top_image(&document);
-
+    if config.enable_meta_extraction {
+        article.favico = get_favico(&document);
+        article.canonical_link = get_canonical_link(&document);
+        article.meta_keywords = get_meta_keywords(&document);
+        article.top_image = get_top_image(&document);
+    }
     if config.enable_text_extraction {
         article.title = get_title(&document);
         let (text, links) = get_text_and_links(&document, article.language.as_ref());
         article.text = text;
         article.links = links;
     }
-    if config.enable_embedding_extraction {
+    if config.enable_embeddings_extraction {
         article.embeddings = Embeddings {
             tweets: get_tweets(&document),
             instagram_posts: get_instagram_posts(&document),
         }
     }
-
     return Some(article);
 }
 
@@ -61,10 +56,10 @@ impl HtmlExtractor {
     }
 
     pub fn from_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
-        return match Document::from_read(::std::io::Cursor::new(bytes.to_owned())){
+        return match Document::from_read(::std::io::Cursor::new(bytes.to_owned())) {
             Ok(document) => process(&document, &self.configuration),
             _ => self.from_non_utf8_bytes(bytes)
-        }
+        };
     }
 
     fn from_non_utf8_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
@@ -72,7 +67,7 @@ impl HtmlExtractor {
         return match encoding_from_whatwg_label(charset2encoding(&result.0)) {
             Some(encoding) => {
                 let utf8reader = encoding.decode(&bytes, DecoderTrap::Ignore).expect("Error");
-                return match pre_process(utf8reader){
+                return match pre_process(utf8reader) {
                     Some(document) => process(&document, &self.configuration),
                     _ => None
                 };
@@ -85,7 +80,7 @@ impl HtmlExtractor {
 #[cfg(test)]
 mod tests {
     use std::fs;
-    use std::string::String;
+
     use crate::configuration::Configuration;
 
     // Note this useful idiom: importing names from outer (for mod tests) scope.
@@ -93,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_crawl_abc() {
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
         let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
@@ -111,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_crawl_bizjournal() {
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
         let raw_html = fs::read_to_string("src/extractor/sites/bizjournals.com.html")
@@ -123,7 +118,7 @@ mod tests {
 
     #[test]
     fn test_crawl_vnexpress() {
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
         let raw_html = fs::read_to_string("src/extractor/sites/vnexpress.net.html")
@@ -136,7 +131,7 @@ mod tests {
 
     #[test]
     fn test_crawl_closermag() {
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
         let raw_html = fs::read_to_string("src/extractor/sites/closermag.fr.html")
@@ -148,7 +143,7 @@ mod tests {
 
     #[test]
     fn test_crawl_charset_koi8_r() {
-        let configuration = Configuration { enable_text_extraction: true, enable_embedding_extraction: true };
+        let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
         let raw_content = fs::read("src/extractor/sites/charset_koi8_r.html")
