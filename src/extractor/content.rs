@@ -1,21 +1,20 @@
 use std::borrow::BorrowMut;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::vec::Vec;
-
 use select::document::Document;
 use select::predicate::{Name, Predicate};
 use unicode_segmentation::UnicodeSegmentation;
-
 use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
-
 use super::select::node::Node;
+
+const DEFAULT_NODE_SCORE: usize = 0;
 
 pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
     let mut top_node: Option<usize> = None;
     let starting_boost: f32 = 1.0;
     let mut i: usize = 0;
-    let mut nodes_with_text: HashMap<usize, String> = HashMap::new();
-    let mut score_per_node: HashMap<usize, usize> = HashMap::new();
+    let mut nodes_with_text: IndexMap<usize, String> = IndexMap::new();
+    let mut score_per_node: IndexMap<usize, usize> = IndexMap::new();
     for node in document.find(Name("p").or(Name("pre")).or(Name("td"))) {
         let node_text = node.text();
         let text_words_count = count_words(&node_text);
@@ -110,14 +109,13 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
     let score = (links_count * link_words_count) / text_words_count;
     return score > 1;
 }
-
+#[inline]
 fn count_words(text: &String) -> usize {
     return text.as_str().unicode_words().count();
 }
 
-const DEFAULT_NODE_SCORE: usize = 0;
-
-fn calculate_node_score_in_map(score_per_node: &mut HashMap<usize, usize>, node_index: usize, increment: usize) -> usize {
+#[inline]
+fn calculate_node_score_in_map(score_per_node: &mut IndexMap<usize, usize>, node_index: usize, increment: usize) -> usize {
     let current_score = score_per_node.get(&node_index).unwrap_or(&DEFAULT_NODE_SCORE);
     return current_score + increment;
 }
@@ -125,7 +123,7 @@ fn calculate_node_score_in_map(score_per_node: &mut HashMap<usize, usize>, node_
 pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
     let excluded_nodes = get_removed_nodes(node);
 
-    let mut text = String::with_capacity(2000);
+    let mut text = String::with_capacity(200);
     let mut links: Vec<String> = Vec::new();
     for descendant in node.descendants() {
         if !excluded_nodes.contains(&descendant.index()) {
@@ -149,8 +147,10 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
 
 fn get_removed_nodes(node: Node) -> Vec<usize> {
     let mut removed_nodes: Vec<usize> = Vec::new();
+    let p_tag_predicate = Name("p");
+    let td_tag_predicate = Name("td");
     for child in node.children() {
-        if !child.is(Name("p")) {
+        if !child.is(p_tag_predicate) {
             let child_text = child.text();
             if !is_high_density_link(&child, count_words(&child_text)) {
                 removed_nodes.push(child.index());
@@ -158,8 +158,8 @@ fn get_removed_nodes(node: Node) -> Vec<usize> {
                     removed_nodes.push(descendant.index());
                 }
             } else {
-                let sub_paragraphes = child.find(Name("p"));
-                if !child.is(Name("td")) && sub_paragraphes.size_hint().1.unwrap_or(0) == 0 {
+                let sub_paragraphes = child.find(p_tag_predicate);
+                if !child.is(td_tag_predicate) && sub_paragraphes.size_hint().1.unwrap_or(0) == 0 {
                     removed_nodes.push(child.index());
                     for descendant in child.descendants() {
                         removed_nodes.push(descendant.index());

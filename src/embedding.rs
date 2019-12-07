@@ -37,7 +37,6 @@ pub fn get_tweets(document: &Document) -> Vec<Embedding> {
     return embeddings;
 }
 
-
 pub fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
     let mut embeddings: Vec<Embedding> = Vec::new();
     let child_link_predicate = Child(Name("p"), Name("a"));

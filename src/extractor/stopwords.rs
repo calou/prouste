@@ -1,12 +1,13 @@
 
 extern crate stopwords;
-use stopwords::{Language, NLTK, Stopwords};
-use std::collections::{HashMap};
-use unicode_segmentation::UnicodeSegmentation;
 
+use stopwords::{Language, NLTK, Stopwords};
+use unicode_segmentation::UnicodeSegmentation;
+use indexmap::IndexMap;
 lazy_static! {
-    static ref HASHMAP: HashMap< &'static str, Vec<&'static str>> = {
-        let mut m = HashMap::new();
+
+    static ref HASHMAP: IndexMap< &'static str, Vec<&'static str>> = {
+        let mut m = IndexMap::new();
         m.insert("en", stopwords_from_language(Language::English));
         m.insert("fr", stopwords_from_language(Language::French));
         m.insert("de", stopwords_from_language(Language::German));
