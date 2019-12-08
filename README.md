@@ -5,7 +5,7 @@
 Prouse extracts the most relevant texts, title, images... from a HTML page.
 
 ```rust
-let body = reqwest::get("https://www.lemonde.fr/politique/article/2019/12/08/si-la-reforme-des-retraites-est-retiree-edouard-philippe-craint-qu-elle-soit-tres-brutale-plus-tard_6022069_823448.html")?
+let body = reqwest::get("https://www.rust-lang.org/")?
     .text()?;
 
 let html_extractor = HtmlExtractor::default();
@@ -13,4 +13,9 @@ let article = html_extractor.from_string(body).unwrap();
 println!("title = {:?}", article.title);
 println!("top image = {:?}", article.top_image);
 println!("text = {:?}", article.text);
+```
+
+# Run example from source
+```bash
+cargo run --example extract_from_url -- https://www.rust-lang.org/
 ```

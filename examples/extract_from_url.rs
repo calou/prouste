@@ -1,10 +1,12 @@
 #![deny(warnings)]
 extern crate reqwest;
 
+use std::env;
 use prouste::html::HtmlExtractor;
 
 fn main()  -> Result<(), Box<dyn std::error::Error>>{
-    let body = reqwest::get("https://www.lemonde.fr/politique/article/2019/12/08/si-la-reforme-des-retraites-est-retiree-edouard-philippe-craint-qu-elle-soit-tres-brutale-plus-tard_6022069_823448.html")?
+    let url = env::args().skip(1).next();
+    let body = reqwest::get(url.unwrap().as_str())?
         .text()?;
 
     let html_extractor = HtmlExtractor::default();
