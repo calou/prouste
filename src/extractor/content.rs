@@ -1,13 +1,13 @@
-use std::borrow::BorrowMut;
-use indexmap::IndexMap;
 use std::vec::Vec;
+
+use indexmap::IndexMap;
 use select::document::Document;
 use select::predicate::{Name, Predicate};
 use unicode_segmentation::UnicodeSegmentation;
-use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
-use super::select::node::Node;
 
-const DEFAULT_NODE_SCORE: usize = 0;
+use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
+
+use super::select::node::Node;
 
 pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
     let mut top_node: Option<usize> = None;
@@ -44,19 +44,13 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 
             let up_score = count_stopwords(text, lang) + (boost_score) as usize;
             let parent_node = document.nth(*node_index).unwrap().parent().unwrap();
+            
+            let current_score = score_per_node.entry(parent_node.index()).or_insert(0);
+            *current_score += up_score;
 
-            let index = parent_node.index();
-            let new_score = calculate_node_score_in_map(score_per_node.borrow_mut(), index, up_score);
-            score_per_node.insert(index, new_score);
-
-            let grandparent_node = parent_node.parent();
-            match grandparent_node {
-                Some(_gp) => {
-                    let index = _gp.index();
-                    let new_score = calculate_node_score_in_map(score_per_node.borrow_mut(), index, up_score / 2);
-                    score_per_node.insert(index, new_score);
-                }
-                _ => ()
+            if let Some(grandparent_node) = parent_node.parent() {
+                let node_score = score_per_node.entry(grandparent_node.index()).or_insert(0);
+                *node_score += up_score / 2;
             }
             i += 1;
         }
@@ -109,15 +103,10 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
     let score = (links_count * link_words_count) / text_words_count;
     return score > 1;
 }
+
 #[inline]
 fn count_words(text: &String) -> usize {
     return text.as_str().unicode_words().count();
-}
-
-#[inline]
-fn calculate_node_score_in_map(score_per_node: &mut IndexMap<usize, usize>, node_index: usize, increment: usize) -> usize {
-    let current_score = score_per_node.get(&node_index).unwrap_or(&DEFAULT_NODE_SCORE);
-    return current_score + increment;
 }
 
 pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
@@ -125,6 +114,7 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
 
     let mut text = String::with_capacity(200);
     let mut links: Vec<String> = Vec::new();
+
     for descendant in node.descendants() {
         if !excluded_nodes.contains(&descendant.index()) {
             if descendant.children().count() == 0 {
@@ -224,7 +214,7 @@ mod tests {
         let document = Document::from(include_str!("sites/theguardian.com.html"));
         let node = get_top_node(&document, "en").unwrap();
         assert_eq!(node.name().unwrap(), "div");
-        //println!("{}", node.text());
+//println!("{}", node.text());
     }
 
     #[test]
