@@ -125,10 +125,9 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
             }
 
             for l in descendant.find(Name("a")) {
-                match l.attr("href") {
-                    Some(l) => links.push(String::from(l)),
-                    _ => ()
-                };
+                if let Some(link) = l.attr("href") {
+                    links.push(String::from(link));
+                }
             }
         }
     }
