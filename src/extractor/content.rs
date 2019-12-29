@@ -44,7 +44,7 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 
             let up_score = count_stopwords(text, lang) + (boost_score) as usize;
             let parent_node = document.nth(*node_index).unwrap().parent().unwrap();
-            
+
             let current_score = score_per_node.entry(parent_node.index()).or_insert(0);
             *current_score += up_score;
 
@@ -115,8 +115,9 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
     let mut text = String::with_capacity(200);
     let mut links: Vec<String> = Vec::new();
 
-    for descendant in node.descendants() {
-        if !excluded_nodes.contains(&descendant.index()) {
+    node.descendants().into_iter()
+        .filter(|n| !excluded_nodes.contains(&n.index()))
+        .for_each(|descendant| {
             if descendant.children().count() == 0 {
                 text.push_str(descendant.text().as_str());
                 if descendant.is(Name("p")) {
@@ -129,8 +130,8 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
                     links.push(String::from(link));
                 }
             }
-        }
-    }
+        });
+
     return (text, links);
 }
 
@@ -138,35 +139,40 @@ fn get_removed_nodes(node: Node) -> Vec<usize> {
     let mut removed_nodes: Vec<usize> = Vec::new();
     let p_tag_predicate = Name("p");
     let td_tag_predicate = Name("td");
-    for child in node.children() {
-        if !child.is(p_tag_predicate) {
-            let child_text = child.text();
-            if !is_high_density_link(&child, count_words(&child_text)) {
-                removed_nodes.push(child.index());
-                for descendant in child.descendants() {
-                    removed_nodes.push(descendant.index());
-                }
+    node.children().into_iter().filter(|child| !child.is(p_tag_predicate)).for_each(|child| {
+        let child_text = child.text();
+        if !is_high_density_link(&child, count_words(&child_text)) {
+            removed_nodes.push(child.index());
+            for descendant in child.descendants() {
+                removed_nodes.push(descendant.index());
+            }
+        } else {
+            let sub_paragraphes = child.find(p_tag_predicate);
+            if !child.is(td_tag_predicate) && sub_paragraphes.size_hint().1.unwrap_or(0) == 0 {
+                let indexes = get_index_and_descendant_indexes(child);
+                removed_nodes.extend(indexes);
             } else {
-                let sub_paragraphes = child.find(p_tag_predicate);
-                if !child.is(td_tag_predicate) && sub_paragraphes.size_hint().1.unwrap_or(0) == 0 {
-                    removed_nodes.push(child.index());
-                    for descendant in child.descendants() {
-                        removed_nodes.push(descendant.index());
-                    }
-                } else {
-                    for sub_paragraph in sub_paragraphes {
-                        if sub_paragraph.text().len() < 25 {
-                            removed_nodes.push(sub_paragraph.index());
-                            for descendant in sub_paragraph.descendants() {
-                                removed_nodes.push(descendant.index());
-                            }
-                        }
+                for sub_paragraph in sub_paragraphes {
+                    if sub_paragraph.text().len() < 25 {
+                        let indexes = get_index_and_descendant_indexes(child);
+                        removed_nodes.extend(indexes);
                     }
                 }
             }
         }
-    }
+    });
     return removed_nodes;
+}
+
+fn get_index_and_descendant_indexes(child: Node) -> Vec<usize> {
+    let descendants = child.descendants();
+    let (size, _) = descendants.size_hint();
+    let mut indexes: Vec<usize> = Vec::with_capacity(size + 1);
+    indexes.push(child.index());
+    descendants.into_iter().for_each(|descendant| {
+        indexes.push(descendant.index());
+    });
+    indexes
 }
 
 
