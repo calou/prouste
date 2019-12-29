@@ -22,7 +22,7 @@ impl<'a> Predicate for ImageTag {
         return match node.name() {
             Some("link") => {
                 return match node.attr("rel") {
-                    Some(b) => bool::from(b == "image_src"),
+                    Some(b) => b == "image_src",
                     _ => false
                 };
             }
@@ -46,6 +46,19 @@ impl<'a> Predicate for ImageTag {
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct ImageWithLink();
+
+impl Predicate for ImageWithLink {
+    fn matches(&self, node: &Node) -> bool {
+        if let Some("a") = node.name() {
+            if let Some(_) = node.attr("href"){
+                return true;
+            }
+        }
+        return false;
+    }
+}
 /*
 let tag_name_predicate = Name("link").or("meta");
 let attribute_predicate = Attr("rel", "image_src")

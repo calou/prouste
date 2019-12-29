@@ -2,9 +2,10 @@ use std::vec::Vec;
 
 use indexmap::IndexMap;
 use select::document::Document;
-use select::predicate::{Name, Predicate};
+use select::predicate::{Name, Predicate, Text};
 use unicode_segmentation::UnicodeSegmentation;
 
+use crate::extractor::predicate::ImageWithLink;
 use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
 
 use super::select::node::Node;
@@ -70,20 +71,18 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 }
 
 fn is_boostable(node: &Node, lang: &str) -> bool {
-    let mut sibling_distance: u32 = 0;
-    let mut sibling_option = node.next();
-    while sibling_option.is_some() {
-        let sibling = sibling_option.unwrap();
-        if sibling.name().unwrap_or("") == "p" {
-            let sibling_text = sibling.text();
-            if has_more_stopwords_than(&sibling_text, lang, 5) {
-                return true;
+    let mut sibling_distance: u8 = 0;
+    while let Some(sibling) = node.next() {
+        if sibling_distance < 3 {
+            if let Some("p") = sibling.name() {
+                let sibling_text = sibling.text();
+                if has_more_stopwords_than(&sibling_text, lang, 5) {
+                    return true;
+                }
             }
-        }
-        sibling_option = sibling.next();
-        sibling_distance += 1;
-        if sibling_distance >= 3 {
-            return false;
+            sibling_distance += 1;
+        } else {
+            break;
         }
     }
     return false;
@@ -95,11 +94,12 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
     }
     let mut link_words_count: usize = 0;
     let mut links_count = 0;
-    for link in node.find(Name("a")) {
-        let link_text = link.text();
+    node.find(Name("a").and(Text))
+        .map(|l| l.text())
+        .for_each(|link_text| {
         link_words_count += count_words(&link_text);
         links_count += 1;
-    }
+    });
     let score = (links_count * link_words_count) / text_words_count;
     return score > 1;
 }
@@ -114,21 +114,21 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
 
     let mut text = String::with_capacity(200);
     let mut links: Vec<String> = Vec::new();
-
+    let p_predicate = Name("p");
+    let a_predicate = ImageWithLink();
     node.descendants().into_iter()
         .filter(|n| !excluded_nodes.contains(&n.index()))
         .for_each(|descendant| {
             if descendant.children().count() == 0 {
                 text.push_str(descendant.text().as_str());
-                if descendant.is(Name("p")) {
+
+                if descendant.is(p_predicate) {
                     text.push('\n');
                 }
             }
 
-            for l in descendant.find(Name("a")) {
-                if let Some(link) = l.attr("href") {
-                    links.push(String::from(link));
-                }
+            for l in descendant.find(a_predicate) {
+                links.push(String::from(l.attr("href").unwrap()));
             }
         });
 
@@ -142,27 +142,27 @@ fn get_removed_nodes(node: Node) -> Vec<usize> {
     node.children().into_iter()
         .filter(|child| !child.is(p_tag_predicate))
         .for_each(|child| {
-        let child_text = child.text();
-        if !is_high_density_link(&child, count_words(&child_text)) {
-            removed_nodes.push(child.index());
-            for descendant in child.descendants() {
-                removed_nodes.push(descendant.index());
-            }
-        } else {
-            let sub_paragraphes = child.find(p_tag_predicate);
-            if !child.is(td_tag_predicate) && sub_paragraphes.size_hint().1.unwrap_or(0) == 0 {
-                let indexes = get_index_and_descendant_indexes(child);
-                removed_nodes.extend(indexes);
+            let child_text = child.text();
+            if !is_high_density_link(&child, count_words(&child_text)) {
+                removed_nodes.push(child.index());
+                for descendant in child.descendants() {
+                    removed_nodes.push(descendant.index());
+                }
             } else {
-                for sub_paragraph in sub_paragraphes {
-                    if sub_paragraph.text().len() < 25 {
-                        let indexes = get_index_and_descendant_indexes(child);
-                        removed_nodes.extend(indexes);
+                let sub_paragraphes = child.find(p_tag_predicate);
+                if !child.is(td_tag_predicate) && sub_paragraphes.size_hint().1.unwrap_or(0) == 0 {
+                    let indexes = get_index_and_descendant_indexes(child);
+                    removed_nodes.extend(indexes);
+                } else {
+                    for sub_paragraph in sub_paragraphes {
+                        if sub_paragraph.text().len() < 25 {
+                            let indexes = get_index_and_descendant_indexes(child);
+                            removed_nodes.extend(indexes);
+                        }
                     }
                 }
             }
-        }
-    });
+        });
     return removed_nodes;
 }
 
