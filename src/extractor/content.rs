@@ -136,10 +136,12 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
 }
 
 fn get_removed_nodes(node: Node) -> Vec<usize> {
-    let mut removed_nodes: Vec<usize> = Vec::new();
+    let mut removed_nodes: Vec<usize> = Vec::with_capacity(100);
     let p_tag_predicate = Name("p");
     let td_tag_predicate = Name("td");
-    node.children().into_iter().filter(|child| !child.is(p_tag_predicate)).for_each(|child| {
+    node.children().into_iter()
+        .filter(|child| !child.is(p_tag_predicate))
+        .for_each(|child| {
         let child_text = child.text();
         if !is_high_density_link(&child, count_words(&child_text)) {
             removed_nodes.push(child.index());
