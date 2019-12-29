@@ -1,6 +1,8 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::vec::Vec;
 
 use indexmap::IndexMap;
+use rayon::prelude::*;
 use select::document::Document;
 use select::predicate::{Name, Predicate, Text};
 use unicode_segmentation::UnicodeSegmentation;
@@ -92,21 +94,30 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
     if text_words_count == 0 {
         return true;
     }
-    let mut link_words_count: usize = 0;
-    let mut links_count = 0;
-    node.find(Name("a").and(Text))
-        .map(|l| l.text())
+    let link_words_count: AtomicUsize = AtomicUsize::new(0);
+    let links_count: AtomicUsize = AtomicUsize::new(0);
+    let text = node.find(Name("a").and(Text))
+        .map(|l| l.text()).collect::<Vec<String>>();
+
+    text.par_iter()
         .for_each(|link_text| {
-        link_words_count += count_words(&link_text);
-        links_count += 1;
-    });
-    let score = (links_count * link_words_count) / text_words_count;
-    return score > 1;
+            link_words_count.fetch_add(count_words(link_text), Ordering::SeqCst);
+            links_count.fetch_add(1, Ordering::SeqCst);
+        });
+    let x = links_count.into_inner();
+    let y = link_words_count.into_inner();
+    return (x * y) > text_words_count;
 }
 
 #[inline]
 fn count_words(text: &String) -> usize {
-    return text.as_str().unicode_words().count();
+    let text_as_str = text.as_str();
+    return count_words_from_str(text_as_str);
+}
+
+#[inline]
+fn count_words_from_str(text_as_str: &str) -> usize {
+    return text_as_str.unicode_words().count();
 }
 
 pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
