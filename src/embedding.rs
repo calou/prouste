@@ -83,7 +83,7 @@ mod tests {
 
     #[test]
     fn get_tweets_telegraph() {
-        let document = Document::from(include_str!("extractor/sites/telegraph.co.uk.html"));
+        let document = Document::from(include_str!("extraction/sites/telegraph.co.uk.html"));
         let tweets = get_tweets(&document);
 
         assert_eq!(tweets.len(), 35);
@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn get_instagram_posts_telegraph() {
-        let document = Document::from(include_str!("extractor/sites/telegraph.co.uk.html"));
+        let document = Document::from(include_str!("extraction/sites/telegraph.co.uk.html"));
 
         let instagram_posts = get_instagram_posts(&document);
         assert_eq!(instagram_posts.len(), 5);

@@ -25,7 +25,7 @@ mod tests {
 
     #[bench]
     fn bench_crawl_abc(b: &mut Bencher) {
-        let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
+        let raw_html = fs::read_to_string("src/extraction/sites/abcnews.go.com.html")
             .expect("Something went wrong reading the file");
 
         let configuration = Configuration::default();
@@ -36,7 +36,7 @@ mod tests {
 
     #[bench]
     fn bench_crawl_theguardian(b: &mut Bencher) {
-        let raw_html = fs::read_to_string("src/extractor/sites/theguardian.com.html")
+        let raw_html = fs::read_to_string("src/extraction/sites/theguardian.com.html")
             .expect("Something went wrong reading the file");
         let configuration = Configuration::default();
         let extractor = HtmlExtractor { configuration };
@@ -46,7 +46,7 @@ mod tests {
 
     #[bench]
     fn bench_crawl_inc(b: &mut Bencher) {
-        let raw_html = fs::read_to_string("src/extractor/sites/inc.com.html")
+        let raw_html = fs::read_to_string("src/extraction/sites/inc.com.html")
             .expect("Something went wrong reading the file");
         let configuration = Configuration::default();
         let extractor = HtmlExtractor { configuration };
@@ -56,7 +56,7 @@ mod tests {
 
     #[bench]
     fn bench_crawl_charset_koi8_r(b: &mut Bencher) {
-        let raw_content = fs::read("src/extractor/sites/charset_koi8_r.html")
+        let raw_content = fs::read("src/extraction/sites/charset_koi8_r.html")
             .expect("Something went wrong reading the file");
 
         let configuration = Configuration::default();
@@ -66,7 +66,7 @@ mod tests {
 
     #[bench]
     fn bench_crawl_telegraph(b: &mut Bencher) {
-        let raw_content = fs::read("src/extractor/sites/telegraph.co.uk.html")
+        let raw_content = fs::read("src/extraction/sites/telegraph.co.uk.html")
             .expect("Something went wrong reading the file");
 
         let extractor = HtmlExtractor::default();
