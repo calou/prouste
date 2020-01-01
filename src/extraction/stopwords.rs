@@ -1,9 +1,9 @@
-
 extern crate stopwords;
 
+use indexmap::IndexMap;
 use stopwords::{Language, NLTK, Stopwords};
 use unicode_segmentation::UnicodeSegmentation;
-use indexmap::IndexMap;
+
 lazy_static! {
 
     static ref HASHMAP: IndexMap< &'static str, Vec<&'static str>> = {
@@ -25,27 +25,26 @@ lazy_static! {
 
 //#[inline(always)]
 fn stopwords_from_language(lang: Language) -> Vec<&'static str> {
-    return match NLTK::stopwords(lang){
+    match NLTK::stopwords(lang) {
         Some(sw) => {
             let mut stopwords = sw.to_vec();
             stopwords.sort();
-            let vec = stopwords.clone();
-            return vec.clone();
-        },
-        _ => Vec::new()
+            stopwords
+        }
+        _ => Vec::default()
     }
 }
 
 fn get_stopwords_from_language(lang: &str) -> Vec<&'static str> {
-    return match HASHMAP.get(lang){
+    match HASHMAP.get(lang) {
         Some(sw) => sw.to_vec(),
         _ => Vec::default()
-    };
+    }
 }
 
 #[inline(always)]
-fn count_max_stopwords(text: &String, _lang: &str, n: usize) -> usize {
-    let lowercased_text = text.as_str().to_ascii_lowercase();
+fn count_max_stopwords(text: &str, _lang: &str, n: usize) -> usize {
+    let lowercased_text = text.to_ascii_lowercase();
     let unicode_words = lowercased_text.unicode_words();
     let stopwords: Vec<_> = get_stopwords_from_language(_lang);
     let mut nb_stopwords: usize = 0;
@@ -58,14 +57,14 @@ fn count_max_stopwords(text: &String, _lang: &str, n: usize) -> usize {
             }
         }
     }
-    return nb_stopwords;
+    nb_stopwords
 }
 
-pub fn count_stopwords(text: &String, lang: &str) -> usize {
-    return count_max_stopwords(text, lang, 999999);
+pub fn count_stopwords(text: &str, lang: &str) -> usize {
+    count_max_stopwords(text, lang, 999_999)
 }
 
-pub fn has_more_stopwords_than(text: &String, lang: &str, n: usize) -> bool {
+pub fn has_more_stopwords_than(text: &str, lang: &str, n: usize) -> bool {
     let number_of_stopwords = count_max_stopwords(text, lang, n);
-    return number_of_stopwords >= n;
+    number_of_stopwords >= n
 }

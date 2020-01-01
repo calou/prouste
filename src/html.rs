@@ -6,7 +6,7 @@ use select::document::Document;
 use crate::article::{Article, Embeddings};
 use crate::configuration::Configuration;
 use crate::embedding::*;
-use crate::extractor::extractor::*;
+use crate::extraction::extractor::*;
 
 pub struct HtmlExtractor {
     pub configuration: Configuration,
@@ -19,39 +19,39 @@ impl Default for HtmlExtractor {
 impl HtmlExtractor {
     pub fn from_string(self: &Self, raw_html: String) -> Option<Article> {
         let option = self.pre_process(raw_html);
-        return match option {
+        match option {
             Some(document) => self.process(&document, &self.configuration),
             _ => None
-        };
+        }
     }
 
     pub fn from_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
-        return match Document::from_read(::std::io::Cursor::new(bytes.to_owned())) {
+        match Document::from_read(::std::io::Cursor::new(bytes.to_owned())) {
             Ok(document) => self.process(&document, &self.configuration),
             _ => self.from_non_utf8_bytes(bytes)
-        };
+        }
     }
 
     fn from_non_utf8_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
         let result = detect(&bytes);
-        return match encoding_from_whatwg_label(charset2encoding(&result.0)) {
+        match encoding_from_whatwg_label(charset2encoding(&result.0)) {
             Some(encoding) => {
                 let utf8reader = encoding.decode(&bytes, DecoderTrap::Ignore).expect("Error");
-                return match self.pre_process(utf8reader) {
+                match self.pre_process(utf8reader) {
                     Some(document) => self.process(&document, &self.configuration),
                     _ => None
-                };
+                }
             }
             _ => None
-        };
+        }
     }
 
     fn pre_process(self: &Self, raw_html: String) -> Option<Document> {
         if raw_html == "" {
             return None;
         }
-        let document = Document::from(raw_html.to_owned().as_str());
-        return Some(document);
+        let document = Document::from(raw_html.as_str());
+        Some(document)
     }
 
     fn process(self: &Self, document: &Document, config: &Configuration) -> Option<Article> {
@@ -76,21 +76,23 @@ impl HtmlExtractor {
                 instagram_posts: get_instagram_posts(&document),
             }
         }
-        return Some(article);
+        Some(article)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::configuration::Configuration;
     use std::fs;
+
+    use crate::configuration::Configuration;
+
     use super::*;
 
     #[test]
     fn test_crawl_abc() {
         let extractor = HtmlExtractor::default();
 
-        let raw_html = fs::read_to_string("src/extractor/sites/abcnews.go.com.html")
+        let raw_html = fs::read_to_string("src/extraction/sites/abcnews.go.com.html")
             .expect("Something went wrong reading the file");
         let option = extractor.from_string(raw_html);
         let article = option.unwrap();
@@ -108,7 +110,7 @@ mod tests {
         let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
-        let raw_html = fs::read_to_string("src/extractor/sites/bizjournals.com.html")
+        let raw_html = fs::read_to_string("src/extraction/sites/bizjournals.com.html")
             .expect("Something went wrong reading the file");
         let option = extractor.from_string(raw_html);
         let article = option.unwrap();
@@ -120,7 +122,7 @@ mod tests {
         let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
-        let raw_html = fs::read_to_string("src/extractor/sites/vnexpress.net.html")
+        let raw_html = fs::read_to_string("src/extraction/sites/vnexpress.net.html")
             .expect("Something went wrong reading the file");
         let option = extractor.from_string(raw_html);
         let article = option.unwrap();
@@ -133,7 +135,7 @@ mod tests {
         let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
-        let raw_html = fs::read_to_string("src/extractor/sites/closermag.fr.html")
+        let raw_html = fs::read_to_string("src/extraction/sites/closermag.fr.html")
             .expect("Something went wrong reading the file");
         let option = extractor.from_string(raw_html);
         println!("{}", option.unwrap().text);
@@ -144,7 +146,7 @@ mod tests {
         let configuration = Configuration { enable_text_extraction: true, enable_embeddings_extraction: true, enable_meta_extraction: true };
         let extractor = HtmlExtractor { configuration };
 
-        let raw_content = fs::read("src/extractor/sites/charset_koi8_r.html")
+        let raw_content = fs::read("src/extraction/sites/charset_koi8_r.html")
             .expect("Something went wrong reading the file");
         let option = extractor.from_bytes(raw_content);
         println!("{}", option.unwrap().text);

@@ -1,12 +1,14 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::vec::Vec;
 
 use indexmap::IndexMap;
+use rayon::prelude::*;
 use select::document::Document;
 use select::predicate::{Name, Predicate, Text};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::extractor::predicate::ImageWithLink;
-use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
+use crate::extraction::predicate::ImageWithLink;
+use crate::extraction::stopwords::{count_stopwords, has_more_stopwords_than};
 
 use super::select::node::Node;
 
@@ -27,10 +29,8 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 
         let bottom_negative_scoring = nodes_with_text_count / 4;
         for (node_index, text) in nodes_with_text.iter() {
-            let mut boost_score: f32 = 0.0;
-            if is_boostable(&node, lang) {
-                boost_score = 50.0 / starting_boost;
-            }
+            let mut boost_score = if is_boostable(&node, lang) { 50.0 / starting_boost } else { 0.0 };
+
             if nodes_with_text_count > 15 {
                 let booster: i32 = (bottom_negative_scoring + i - nodes_with_text_count) as i32;
                 if booster >= 0 {
@@ -64,10 +64,10 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
             }
         }
     }
-    return match top_node {
+    match top_node {
         Some(idx) => Node::new(document, idx),
         _ => None
-    };
+    }
 }
 
 fn is_boostable(node: &Node, lang: &str) -> bool {
@@ -85,28 +85,31 @@ fn is_boostable(node: &Node, lang: &str) -> bool {
             break;
         }
     }
-    return false;
+    false
 }
 
 fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
     if text_words_count == 0 {
         return true;
     }
-    let mut link_words_count: usize = 0;
-    let mut links_count = 0;
-    node.find(Name("a").and(Text))
-        .map(|l| l.text())
+    let link_words_count: AtomicUsize = AtomicUsize::new(0);
+    let links_count: AtomicUsize = AtomicUsize::new(0);
+    let text = node.find(Name("a").and(Text))
+        .map(|l| l.text()).collect::<Vec<String>>();
+
+    text.par_iter()
         .for_each(|link_text| {
-        link_words_count += count_words(&link_text);
-        links_count += 1;
-    });
-    let score = (links_count * link_words_count) / text_words_count;
-    return score > 1;
+            link_words_count.fetch_add(count_words(link_text), Ordering::SeqCst);
+            links_count.fetch_add(1, Ordering::SeqCst);
+        });
+    let x = links_count.into_inner();
+    let y = link_words_count.into_inner();
+    (x * y) > text_words_count
 }
 
 #[inline]
-fn count_words(text: &String) -> usize {
-    return text.as_str().unicode_words().count();
+fn count_words(text: &str) -> usize {
+    text.unicode_words().count()
 }
 
 pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
@@ -116,7 +119,7 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
     let mut links: Vec<String> = Vec::new();
     let p_predicate = Name("p");
     let a_predicate = ImageWithLink();
-    node.descendants().into_iter()
+    node.descendants()
         .filter(|n| !excluded_nodes.contains(&n.index()))
         .for_each(|descendant| {
             if descendant.children().count() == 0 {
@@ -132,14 +135,14 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
             }
         });
 
-    return (text, links);
+    (text, links)
 }
 
 fn get_removed_nodes(node: Node) -> Vec<usize> {
     let mut removed_nodes: Vec<usize> = Vec::with_capacity(100);
     let p_tag_predicate = Name("p");
     let td_tag_predicate = Name("td");
-    node.children().into_iter()
+    node.children()
         .filter(|child| !child.is(p_tag_predicate))
         .for_each(|child| {
             let child_text = child.text();
@@ -163,7 +166,7 @@ fn get_removed_nodes(node: Node) -> Vec<usize> {
                 }
             }
         });
-    return removed_nodes;
+    removed_nodes
 }
 
 fn get_index_and_descendant_indexes(child: Node) -> Vec<usize> {
@@ -171,7 +174,7 @@ fn get_index_and_descendant_indexes(child: Node) -> Vec<usize> {
     let (size, _) = descendants.size_hint();
     let mut indexes: Vec<usize> = Vec::with_capacity(size + 1);
     indexes.push(child.index());
-    descendants.into_iter().for_each(|descendant| {
+    descendants.for_each(|descendant| {
         indexes.push(descendant.index());
     });
     indexes
