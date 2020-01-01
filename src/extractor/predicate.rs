@@ -21,24 +21,18 @@ impl<'a> Predicate for ImageTag {
     fn matches(&self, node: &Node) -> bool {
         return match node.name() {
             Some("link") => {
-                return match node.attr("rel") {
-                    Some(b) => b == "image_src",
-                    _ => false
-                };
+                if let Some(b) = node.attr("rel") {
+                    return b == "image_src";
+                }
+                return false;
             }
             Some("meta") => {
-                match node.attr("property") {
-                    Some(value) => {
-                        return value == "og:image";
-                    }
-                    _ => ()
-                };
-                match node.attr("name") {
-                    Some(value) => {
-                        return value == "twitter:image" || value == "twitter:image:src";
-                    }
-                    _ => ()
-                };
+                if let Some(value) = node.attr("property") {
+                    return value == "og:image";
+                }
+                if let Some(value) = node.attr("name") {
+                    return value == "twitter:image" || value == "twitter:image:src";
+                }
                 return false;
             }
             _ => false
@@ -52,17 +46,10 @@ pub struct ImageWithLink();
 impl Predicate for ImageWithLink {
     fn matches(&self, node: &Node) -> bool {
         if let Some("a") = node.name() {
-            if let Some(_) = node.attr("href"){
+            if node.attr("href").is_some() {
                 return true;
             }
         }
         return false;
     }
 }
-/*
-let tag_name_predicate = Name("link").or("meta");
-let attribute_predicate = Attr("rel", "image_src")
-.or(Attr("name", "twitter:image"))
-.or(Attr("property", "og:image"));
-let predicate = tag_name_predicate.and(attribute_predicate);
-*/

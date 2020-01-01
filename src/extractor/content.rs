@@ -127,7 +127,7 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
     let mut links: Vec<String> = Vec::new();
     let p_predicate = Name("p");
     let a_predicate = ImageWithLink();
-    node.descendants().into_iter()
+    node.descendants()
         .filter(|n| !excluded_nodes.contains(&n.index()))
         .for_each(|descendant| {
             if descendant.children().count() == 0 {
@@ -150,7 +150,7 @@ fn get_removed_nodes(node: Node) -> Vec<usize> {
     let mut removed_nodes: Vec<usize> = Vec::with_capacity(100);
     let p_tag_predicate = Name("p");
     let td_tag_predicate = Name("td");
-    node.children().into_iter()
+    node.children()
         .filter(|child| !child.is(p_tag_predicate))
         .for_each(|child| {
             let child_text = child.text();

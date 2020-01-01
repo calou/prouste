@@ -30,7 +30,7 @@ fn stopwords_from_language(lang: Language) -> Vec<&'static str> {
             let mut stopwords = sw.to_vec();
             stopwords.sort();
             let vec = stopwords.clone();
-            return vec.clone();
+            return vec;
         },
         _ => Vec::new()
     }

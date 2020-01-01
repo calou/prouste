@@ -15,8 +15,8 @@ pub mod extractor {
         for text_extractor in text_extractors.iter() {
             let extr = &**text_extractor;
             let opt = extr.extract(document);
-            if opt.is_some() {
-                return opt.unwrap();
+            if let Some(val ) = opt {
+                return val;
             }
         }
         return String::new();
@@ -24,7 +24,7 @@ pub mod extractor {
 
     pub fn get_text_from_single_extractor(document: &Document, extractor: Box<dyn TextExtractor>) -> String {
         let opt = extractor.extract(document);
-        return opt.unwrap_or(String::new());
+        return opt.unwrap_or_default();
     }
 
     pub fn get_raw_title(document: &Document) -> String {
@@ -46,7 +46,7 @@ pub mod extractor {
             Box::new(MetaContentBasedExtractor { attr: "http-equiv", value: "content-language" }),
         ]);
         let full_language = get_text_from_multiple_extractors(document, meta_extractors);
-        return match full_language.find("-") {
+        return match full_language.find('-') {
             Some(idx) => String::from(&full_language[..idx]),
             _ => full_language
         };
