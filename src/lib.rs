@@ -11,7 +11,7 @@ pub mod article;
 pub mod configuration;
 pub mod html;
 mod embedding;
-mod extractor;
+mod extraction;
 
 #[cfg(test)]
 mod tests {

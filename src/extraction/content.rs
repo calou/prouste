@@ -7,8 +7,8 @@ use select::document::Document;
 use select::predicate::{Name, Predicate, Text};
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::extractor::predicate::ImageWithLink;
-use crate::extractor::stopwords::{count_stopwords, has_more_stopwords_than};
+use crate::extraction::predicate::ImageWithLink;
+use crate::extraction::stopwords::{count_stopwords, has_more_stopwords_than};
 
 use super::select::node::Node;
 

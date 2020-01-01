@@ -6,7 +6,7 @@ use select::document::Document;
 use crate::article::{Article, Embeddings};
 use crate::configuration::Configuration;
 use crate::embedding::*;
-use crate::extractor::extractor::*;
+use crate::extraction::extractor::*;
 
 pub struct HtmlExtractor {
     pub configuration: Configuration,

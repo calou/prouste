@@ -8,8 +8,8 @@ mod stopwords;
 pub mod extractor {
     use select::document::Document;
 
-    use crate::extractor::content::{get_cleaned_text_and_links, get_top_node};
-    use crate::extractor::text::*;
+    use crate::extraction::content::{get_cleaned_text_and_links, get_top_node};
+    use crate::extraction::text::*;
 
     fn get_text_from_multiple_extractors(document: &Document, text_extractors: Box<[Box<dyn TextExtractor>]>) -> String {
         for text_extractor in text_extractors.iter() {

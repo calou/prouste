@@ -4,7 +4,7 @@ use std::string::String;
 use select::document::Document;
 use select::predicate::{Attr, Name, Predicate};
 
-use crate::extractor::predicate::{AttrContains, ImageTag};
+use crate::extraction::predicate::{AttrContains, ImageTag};
 
 pub trait TextExtractor {
     fn extract(&self, document: &Document) -> Option<String>;
