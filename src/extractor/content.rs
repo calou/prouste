@@ -108,14 +108,8 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
 }
 
 #[inline]
-fn count_words(text: &String) -> usize {
-    let text_as_str = text.as_str();
-    count_words_from_str(text_as_str)
-}
-
-#[inline]
-fn count_words_from_str(text_as_str: &str) -> usize {
-     text_as_str.unicode_words().count()
+fn count_words(text: &str) -> usize {
+    text.unicode_words().count()
 }
 
 pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
@@ -180,7 +174,7 @@ fn get_index_and_descendant_indexes(child: Node) -> Vec<usize> {
     let (size, _) = descendants.size_hint();
     let mut indexes: Vec<usize> = Vec::with_capacity(size + 1);
     indexes.push(child.index());
-    descendants.into_iter().for_each(|descendant| {
+    descendants.for_each(|descendant| {
         indexes.push(descendant.index());
     });
     indexes

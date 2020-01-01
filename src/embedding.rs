@@ -32,7 +32,7 @@ pub fn get_tweets(document: &Document) -> Vec<Embedding> {
         }
         embeddings.push(Embedding { url, text })
     }
-    return embeddings;
+    embeddings
 }
 
 pub fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
@@ -46,7 +46,7 @@ pub fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
             });
         }
     }
-    return embeddings;
+    embeddings
 }
 
 fn get_href(node: Node) -> String {

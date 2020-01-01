@@ -19,31 +19,31 @@ impl Default for HtmlExtractor {
 impl HtmlExtractor {
     pub fn from_string(self: &Self, raw_html: String) -> Option<Article> {
         let option = self.pre_process(raw_html);
-        return match option {
+        match option {
             Some(document) => self.process(&document, &self.configuration),
             _ => None
-        };
+        }
     }
 
     pub fn from_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
-        return match Document::from_read(::std::io::Cursor::new(bytes.to_owned())) {
+        match Document::from_read(::std::io::Cursor::new(bytes.to_owned())) {
             Ok(document) => self.process(&document, &self.configuration),
             _ => self.from_non_utf8_bytes(bytes)
-        };
+        }
     }
 
     fn from_non_utf8_bytes(self: &Self, bytes: Vec<u8>) -> Option<Article> {
         let result = detect(&bytes);
-        return match encoding_from_whatwg_label(charset2encoding(&result.0)) {
+        match encoding_from_whatwg_label(charset2encoding(&result.0)) {
             Some(encoding) => {
                 let utf8reader = encoding.decode(&bytes, DecoderTrap::Ignore).expect("Error");
-                return match self.pre_process(utf8reader) {
+                match self.pre_process(utf8reader) {
                     Some(document) => self.process(&document, &self.configuration),
                     _ => None
-                };
+                }
             }
             _ => None
-        };
+        }
     }
 
     fn pre_process(self: &Self, raw_html: String) -> Option<Document> {
@@ -51,7 +51,7 @@ impl HtmlExtractor {
             return None;
         }
         let document = Document::from(raw_html.as_str());
-        return Some(document);
+        Some(document)
     }
 
     fn process(self: &Self, document: &Document, config: &Configuration) -> Option<Article> {
@@ -76,14 +76,16 @@ impl HtmlExtractor {
                 instagram_posts: get_instagram_posts(&document),
             }
         }
-        return Some(article);
+        Some(article)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::configuration::Configuration;
     use std::fs;
+
+    use crate::configuration::Configuration;
+
     use super::*;
 
     #[test]

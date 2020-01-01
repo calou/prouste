@@ -24,7 +24,7 @@ impl<'a> Predicate for ImageTag {
                 if let Some(b) = node.attr("rel") {
                     return b == "image_src";
                 }
-                return false;
+                false
             }
             Some("meta") => {
                 if let Some(value) = node.attr("property") {
@@ -33,7 +33,7 @@ impl<'a> Predicate for ImageTag {
                 if let Some(value) = node.attr("name") {
                     return value == "twitter:image" || value == "twitter:image:src";
                 }
-                return false;
+                false
             }
             _ => false
         }

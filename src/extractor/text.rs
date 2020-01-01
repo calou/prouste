@@ -17,10 +17,10 @@ pub struct TagBasedExtractor {
 
 impl TextExtractor for TagBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
-        return match document.find(Name(self.tag)).next() {
+        match document.find(Name(self.tag)).next() {
             Some(node) => Some(node.text()),
             _ => None
-        };
+        }
     }
 }
 
@@ -32,10 +32,10 @@ pub struct DualTagBasedExtractor {
 
 impl TextExtractor for DualTagBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
-        return match document.find(Name(self.tag1).or(Name(self.tag2))).next() {
+        match document.find(Name(self.tag1).or(Name(self.tag2))).next() {
             Some(node) => Some(node.text()),
             _ => None
-        };
+        }
     }
 }
 
@@ -47,13 +47,13 @@ pub struct MetaContentBasedExtractor {
 
 impl TextExtractor for MetaContentBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
-        return match document.find(Name("meta").and(Attr(self.attr, self.value))).next() {
+        match document.find(Name("meta").and(Attr(self.attr, self.value))).next() {
             Some(node) => match node.attr("content") {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
             _ => None
-        };
+        }
     }
 }
 
@@ -65,13 +65,13 @@ pub struct TagAttributeBasedExtractor {
 
 impl TextExtractor for TagAttributeBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
-        return match document.find(Name(self.tag)).next() {
+        match document.find(Name(self.tag)).next() {
             Some(node) => match node.attr(self.attr) {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
             _ => None
-        };
+        }
     }
 }
 
@@ -83,13 +83,13 @@ pub struct LinkRelEqualsHrefBasedExtractor {
 
 impl TextExtractor for LinkRelEqualsHrefBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
-        return match document.find(Name("link").and(Attr(self.attr, self.value))).next() {
+        match document.find(Name("link").and(Attr(self.attr, self.value))).next() {
             Some(node) => match node.attr("href") {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
             _ => None
-        };
+        }
     }
 }
 
@@ -101,13 +101,13 @@ pub struct LinkRelContainsHrefBasedExtractor {
 
 impl TextExtractor for LinkRelContainsHrefBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
-        return match document.find(Name("link").and(AttrContains(self.attr, self.value))).next() {
+        match document.find(Name("link").and(AttrContains(self.attr, self.value))).next() {
             Some(node) => match node.attr("href") {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
             _ => None
-        };
+        }
     }
 }
 
@@ -152,7 +152,7 @@ impl TextExtractor for TopImageExtractor {
                 max_count = *c;
             }
         }
-        return opt;
+        opt
     }
 }
 

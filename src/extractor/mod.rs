@@ -37,7 +37,7 @@ pub mod extractor {
     }
 
     pub fn get_title(document: &Document) -> String {
-        return get_raw_title(document);
+        get_raw_title(document)
     }
 
     pub fn get_language(document: &Document) -> String {

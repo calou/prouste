@@ -29,10 +29,9 @@ fn stopwords_from_language(lang: Language) -> Vec<&'static str> {
         Some(sw) => {
             let mut stopwords = sw.to_vec();
             stopwords.sort();
-            let vec = stopwords.clone();
-            return vec;
+            stopwords
         }
-        _ => Vec::new()
+        _ => Vec::default()
     }
 }
 
@@ -62,7 +61,7 @@ fn count_max_stopwords(text: &str, _lang: &str, n: usize) -> usize {
 }
 
 pub fn count_stopwords(text: &str, lang: &str) -> usize {
-    return count_max_stopwords(text, lang, 999_999);
+    count_max_stopwords(text, lang, 999_999)
 }
 
 pub fn has_more_stopwords_than(text: &str, lang: &str, n: usize) -> bool {
