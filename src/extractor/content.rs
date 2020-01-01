@@ -29,10 +29,8 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
 
         let bottom_negative_scoring = nodes_with_text_count / 4;
         for (node_index, text) in nodes_with_text.iter() {
-            let mut boost_score: f32 = 0.0;
-            if is_boostable(&node, lang) {
-                boost_score = 50.0 / starting_boost;
-            }
+            let mut boost_score = if is_boostable(&node, lang) { 50.0 / starting_boost } else { 0.0 };
+
             if nodes_with_text_count > 15 {
                 let booster: i32 = (bottom_negative_scoring + i - nodes_with_text_count) as i32;
                 if booster >= 0 {
@@ -66,10 +64,10 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
             }
         }
     }
-    return match top_node {
+    match top_node {
         Some(idx) => Node::new(document, idx),
         _ => None
-    };
+    }
 }
 
 fn is_boostable(node: &Node, lang: &str) -> bool {
@@ -87,7 +85,7 @@ fn is_boostable(node: &Node, lang: &str) -> bool {
             break;
         }
     }
-    return false;
+    false
 }
 
 fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
@@ -106,18 +104,18 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
         });
     let x = links_count.into_inner();
     let y = link_words_count.into_inner();
-    return (x * y) > text_words_count;
+    (x * y) > text_words_count
 }
 
 #[inline]
 fn count_words(text: &String) -> usize {
     let text_as_str = text.as_str();
-    return count_words_from_str(text_as_str);
+    count_words_from_str(text_as_str)
 }
 
 #[inline]
 fn count_words_from_str(text_as_str: &str) -> usize {
-    return text_as_str.unicode_words().count();
+     text_as_str.unicode_words().count()
 }
 
 pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<String>) {
@@ -143,7 +141,7 @@ pub fn get_cleaned_text_and_links(node: Node, _lang: &str) -> (String, Vec<Strin
             }
         });
 
-    return (text, links);
+    (text, links)
 }
 
 fn get_removed_nodes(node: Node) -> Vec<usize> {
@@ -174,7 +172,7 @@ fn get_removed_nodes(node: Node) -> Vec<usize> {
                 }
             }
         });
-    return removed_nodes;
+    removed_nodes
 }
 
 fn get_index_and_descendant_indexes(child: Node) -> Vec<usize> {

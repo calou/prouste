@@ -7,10 +7,10 @@ pub struct AttrContains<N, V>(pub N, pub V);
 
 impl<'a> Predicate for AttrContains<&'a str, &'a str> {
     fn matches(&self, node: &Node) -> bool {
-        return match node.attr(self.0) {
+        match node.attr(self.0) {
             Some(value) => value.contains(self.1),
             _ => false
-        };
+        }
     }
 }
 
@@ -19,7 +19,7 @@ pub struct ImageTag;
 
 impl<'a> Predicate for ImageTag {
     fn matches(&self, node: &Node) -> bool {
-        return match node.name() {
+        match node.name() {
             Some("link") => {
                 if let Some(b) = node.attr("rel") {
                     return b == "image_src";
@@ -36,7 +36,7 @@ impl<'a> Predicate for ImageTag {
                 return false;
             }
             _ => false
-        };
+        }
     }
 }
 
@@ -50,6 +50,6 @@ impl Predicate for ImageWithLink {
                 return true;
             }
         }
-        return false;
+        false
     }
 }

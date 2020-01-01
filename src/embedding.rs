@@ -1,12 +1,12 @@
-use serde::{Serialize, Deserialize};
 use regex::Regex;
 use select::document::Document;
+use select::node::Node;
 use select::predicate::{Name, Predicate};
+use serde::{Deserialize, Serialize};
 
 use super::select::predicate::{Child, Class};
-use select::node::Node;
 
-lazy_static!{
+lazy_static! {
     static ref SPACES_REGEX: Regex = Regex::new(r"\s\s+").unwrap();
 }
 
@@ -24,13 +24,11 @@ pub fn get_tweets(document: &Document) -> Vec<Embedding> {
     for tag in document.find(blockquote_predicate.and(Class("twitter-tweet"))) {
         let mut text: String = String::default();
         let mut url: String = String::default();
-        match tag.find(p_predicate).next() {
-            Some(node) => text = get_sanitized_text(node),
-            _ => ()
+        if let Some(node) = tag.find(p_predicate).next() {
+             text = get_sanitized_text(node);
         }
-        match tag.find(child_link_predicate).next() {
-            Some(node) => url = get_href(node),
-            _ => ()
+        if let Some(node) = tag.find(child_link_predicate).next() {
+            url = get_href(node);
         }
         embeddings.push(Embedding { url, text })
     }
@@ -41,14 +39,11 @@ pub fn get_instagram_posts(document: &Document) -> Vec<Embedding> {
     let mut embeddings: Vec<Embedding> = Vec::new();
     let child_link_predicate = Child(Name("p"), Name("a"));
     for tag in document.find(Name("blockquote").and(Class("instagram-media"))) {
-        match tag.find(child_link_predicate).next() {
-            Some(node) => {
-                embeddings.push(Embedding {
-                    url: get_href(node),
-                    text: get_sanitized_text(node),
-                });
-            }
-            _ => ()
+        if let Some(node) = tag.find(child_link_predicate).next() {
+            embeddings.push(Embedding {
+                url: get_href(node),
+                text: get_sanitized_text(node),
+            });
         }
     }
     return embeddings;
@@ -107,15 +102,15 @@ mod tests {
         assert_eq!(post.url, "https://www.instagram.com/p/BHA-BtNh3h1/");
         assert_eq!(post.text, "#besmart pay attention and work hard to buy @chanelofficial #remain where's Sunderland? Does Sarah Palin live there? Lol");
     }
-/*
-    #[test]
-    fn get_youtube_videos() {
-        let document = Document::from(include_str!("sites/figaro.fr.html"));
+    /*
+        #[test]
+        fn get_youtube_videos() {
+            let document = Document::from(include_str!("sites/figaro.fr.html"));
 
-        let videos = get_instagram_posts(&document);
-        assert_eq!(videos.len(), 5);
-        let video = videos.get(0).unwrap();
-        assert_eq!(video.url, "https://www.instagram.com/p/BHA-BtNh3h1/");
-        assert_eq!(video.text, "#besmart pay attention and work hard to buy @chanelofficial #remain where's Sunderland? Does Sarah Palin live there? Lol");
-    }*/
+            let videos = get_instagram_posts(&document);
+            assert_eq!(videos.len(), 5);
+            let video = videos.get(0).unwrap();
+            assert_eq!(video.url, "https://www.instagram.com/p/BHA-BtNh3h1/");
+            assert_eq!(video.text, "#besmart pay attention and work hard to buy @chanelofficial #remain where's Sunderland? Does Sarah Palin live there? Lol");
+        }*/
 }

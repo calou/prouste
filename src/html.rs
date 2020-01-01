@@ -50,7 +50,7 @@ impl HtmlExtractor {
         if raw_html == "" {
             return None;
         }
-        let document = Document::from(raw_html.to_owned().as_str());
+        let document = Document::from(raw_html.as_str());
         return Some(document);
     }
 

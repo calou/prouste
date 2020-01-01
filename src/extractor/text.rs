@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap};
+use std::collections::BTreeMap;
 use std::string::String;
 
 use select::document::Document;
@@ -48,7 +48,7 @@ pub struct MetaContentBasedExtractor {
 impl TextExtractor for MetaContentBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
         return match document.find(Name("meta").and(Attr(self.attr, self.value))).next() {
-            Some(node) => match node.attr("content"){
+            Some(node) => match node.attr("content") {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
@@ -66,7 +66,7 @@ pub struct TagAttributeBasedExtractor {
 impl TextExtractor for TagAttributeBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
         return match document.find(Name(self.tag)).next() {
-            Some(node) => match node.attr(self.attr){
+            Some(node) => match node.attr(self.attr) {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
@@ -84,7 +84,7 @@ pub struct LinkRelEqualsHrefBasedExtractor {
 impl TextExtractor for LinkRelEqualsHrefBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
         return match document.find(Name("link").and(Attr(self.attr, self.value))).next() {
-            Some(node) => match node.attr("href"){
+            Some(node) => match node.attr("href") {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
@@ -102,7 +102,7 @@ pub struct LinkRelContainsHrefBasedExtractor {
 impl TextExtractor for LinkRelContainsHrefBasedExtractor {
     fn extract(&self, document: &Document) -> Option<String> {
         return match document.find(Name("link").and(AttrContains(self.attr, self.value))).next() {
-            Some(node) =>  match node.attr("href"){
+            Some(node) => match node.attr("href") {
                 Some(s) => Some(String::from(s)),
                 _ => None
             },
@@ -122,26 +122,23 @@ impl TextExtractor for TopImageExtractor {
                 Some("meta") => {
                     match node.attr("name") {
                         Some("og:image") | Some("twitter:image") | Some("twitter:image:src") => {
-                            let key = node.attr("content").unwrap_or("");
+                            let key = node.attr("content").unwrap_or_default();
                             *counts.entry(String::from(key)).or_insert(0u32) += 1u32;
                         }
                         _ => ()
                     }
                     match node.attr("property") {
                         Some("og:image") | Some("twitter:image") | Some("twitter:image:src") => {
-                            let key = node.attr("content").unwrap_or("");
+                            let key = node.attr("content").unwrap_or_default();
                             *counts.entry(String::from(key)).or_insert(0u32) += 1u32;
                         }
                         _ => ()
                     }
                 }
                 Some("link") => {
-                    match node.attr("rel") {
-                        Some("image_src") => {
-                            let key = node.attr("href").unwrap_or("");
-                            *counts.entry(String::from(key)).or_insert(0u32) += 1u32;
-                        }
-                        _ => ()
+                    if let Some("image_src") = node.attr("rel") {
+                        let key = node.attr("href").unwrap_or("");
+                        *counts.entry(String::from(key)).or_insert(0u32) += 1u32;
                     }
                 }
                 _ => ()
