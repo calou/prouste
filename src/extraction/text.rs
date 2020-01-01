@@ -8,6 +8,21 @@ use crate::extraction::predicate::{AttrContains, ImageTag};
 
 pub trait TextExtractor {
     fn extract(&self, document: &Document) -> Option<String>;
+    fn or<T: TextExtractor>(self, other: T) -> OrExtractor<Self, T>
+        where Self: Sized, { OrExtractor(self, other) }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct OrExtractor<A, B>(pub A, pub B);
+
+impl<A: TextExtractor, B: TextExtractor> TextExtractor for OrExtractor<A, B> {
+    fn extract(&self, document: &Document) -> Option<String> {
+        let opt = self.0.extract(document);
+        if opt.is_some() {
+            return opt;
+        }
+        self.1.extract(document)
+    }
 }
 
 #[derive(Debug)]
