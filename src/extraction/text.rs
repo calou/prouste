@@ -6,7 +6,7 @@ use select::predicate::{Attr, Name, Predicate};
 
 use crate::extraction::predicate::{AttrContains, ImageTag};
 
-pub trait TextExtractor {
+pub trait TextExtractor: Sized {
     fn extract(&self, document: &Document) -> Option<String>;
     fn or<T: TextExtractor>(self, other: T) -> OrExtractor<Self, T>
         where Self: Sized, { OrExtractor(self, other) }
@@ -170,7 +170,6 @@ impl TextExtractor for TopImageExtractor {
         opt
     }
 }
-
 
 #[cfg(test)]
 mod tests {

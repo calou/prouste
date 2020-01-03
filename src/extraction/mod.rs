@@ -11,7 +11,7 @@ pub mod extractor {
     use crate::extraction::content::{get_cleaned_text_and_links, get_top_node};
     use crate::extraction::text::*;
 
-    pub fn get_text_from_single_extractor(document: &Document, extractor: Box<dyn TextExtractor>) -> String {
+    pub fn get_text_from_single_extractor<T: TextExtractor>(document: &Document, extractor: T) -> String {
         let opt = extractor.extract(document);
         opt.unwrap_or_default()
     }
@@ -20,7 +20,7 @@ pub mod extractor {
         let extractor = TagBasedExtractor { tag: "title" }
             .or(MetaContentBasedExtractor { attr: "property", value: "og:title" })
             .or(DualTagBasedExtractor { tag1: "post-title", tag2: "headline" });
-        get_text_from_single_extractor(document, Box::new(extractor))
+        get_text_from_single_extractor(document, extractor)
     }
 
     pub fn get_title(document: &Document) -> String {
@@ -29,7 +29,7 @@ pub mod extractor {
 
     pub fn get_language(document: &Document) -> String {
         let extractor = TagAttributeBasedExtractor { tag: "html", attr: "lang" }.or(MetaContentBasedExtractor { attr: "http-equiv", value: "content-language" });
-        let full_language = get_text_from_single_extractor(document, Box::new(extractor));
+        let full_language = get_text_from_single_extractor(document, extractor);
         match full_language.find('-') {
             Some(idx) => String::from(&full_language[..idx]),
             _ => full_language
@@ -38,22 +38,22 @@ pub mod extractor {
 
     pub fn get_favico(document: &Document) -> String {
         let extractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: " icon" };
-        get_text_from_single_extractor(document, Box::new(extractor))
+        get_text_from_single_extractor(document, extractor)
     }
 
     pub fn get_canonical_link(document: &Document) -> String {
         let extractor = LinkRelEqualsHrefBasedExtractor { attr: "rel", value: "canonical" };
-        get_text_from_single_extractor(document, Box::new(extractor))
+        get_text_from_single_extractor(document, extractor)
     }
 
     pub fn get_meta_keywords(document: &Document) -> String {
         let extractor = MetaContentBasedExtractor { attr: "name", value: "keywords" };
-        get_text_from_single_extractor(document, Box::new(extractor))
+        get_text_from_single_extractor(document, extractor)
     }
 
     pub fn get_top_image(document: &Document) -> String {
         let extractor = TopImageExtractor {};
-        get_text_from_single_extractor(document, Box::new(extractor))
+        get_text_from_single_extractor(document, extractor)
     }
 
     pub fn get_text_and_links(document: &Document, lang: &str) -> (String, Vec<String>) {
