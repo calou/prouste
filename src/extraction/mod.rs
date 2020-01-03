@@ -28,32 +28,35 @@ pub mod extractor {
     }
 
     pub fn get_language(document: &Document) -> String {
-        let extractor = TagAttributeBasedExtractor { tag: "html", attr: "lang" }.or(MetaContentBasedExtractor { attr: "http-equiv", value: "content-language" });
-        let full_language = get_text_from_single_extractor(document, extractor);
+        let full_language = get_text_from_single_extractor(document, LanguageTextExtractor::default());
         match full_language.find('-') {
             Some(idx) => String::from(&full_language[..idx]),
             _ => full_language
         }
     }
 
+    const LINK_REL_EXTRACTOR: LinkRelContainsHrefBasedExtractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: " icon" };
+
     pub fn get_favico(document: &Document) -> String {
-        let extractor = LinkRelContainsHrefBasedExtractor { attr: "rel", value: " icon" };
-        get_text_from_single_extractor(document, extractor)
+        get_text_from_single_extractor(document, LINK_REL_EXTRACTOR)
     }
+
+    const CANONICAL_LINK_EXTRACTOR: LinkRelEqualsHrefBasedExtractor = LinkRelEqualsHrefBasedExtractor { attr: "rel", value: "canonical" };
 
     pub fn get_canonical_link(document: &Document) -> String {
-        let extractor = LinkRelEqualsHrefBasedExtractor { attr: "rel", value: "canonical" };
-        get_text_from_single_extractor(document, extractor)
+        get_text_from_single_extractor(document, CANONICAL_LINK_EXTRACTOR)
     }
+
+    const META_KEYWORD_EXTRACTOR: MetaContentBasedExtractor = MetaContentBasedExtractor { attr: "name", value: "keywords" };
 
     pub fn get_meta_keywords(document: &Document) -> String {
-        let extractor = MetaContentBasedExtractor { attr: "name", value: "keywords" };
-        get_text_from_single_extractor(document, extractor)
+        get_text_from_single_extractor(document, META_KEYWORD_EXTRACTOR)
     }
 
+    const TOP_IMAGE_EXTRACTOR: TopImageExtractor = TopImageExtractor;
+
     pub fn get_top_image(document: &Document) -> String {
-        let extractor = TopImageExtractor {};
-        get_text_from_single_extractor(document, extractor)
+        get_text_from_single_extractor(document, TOP_IMAGE_EXTRACTOR)
     }
 
     pub fn get_text_and_links(document: &Document, lang: &str) -> (String, Vec<String>) {

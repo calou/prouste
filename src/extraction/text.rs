@@ -171,6 +171,24 @@ impl TextExtractor for TopImageExtractor {
     }
 }
 
+pub struct LanguageTextExtractor {
+    delegate: OrExtractor<TagAttributeBasedExtractor, MetaContentBasedExtractor>,
+}
+
+impl Default for LanguageTextExtractor {
+    fn default() -> Self {
+        Self {
+            delegate: TagAttributeBasedExtractor { tag: "html", attr: "lang" }.or(MetaContentBasedExtractor { attr: "http-equiv", value: "content-language" }),
+        }
+    }
+}
+
+impl TextExtractor for LanguageTextExtractor {
+    fn extract(&self, document: &Document) -> Option<String> {
+        self.delegate.extract(document)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use select::document::Document;
