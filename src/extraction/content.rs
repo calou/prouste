@@ -1,8 +1,5 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::vec::Vec;
-
 use indexmap::IndexMap;
-use rayon::prelude::*;
 use select::document::Document;
 use select::predicate::{Name, Predicate, Text};
 use unicode_segmentation::UnicodeSegmentation;
@@ -92,19 +89,15 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
     if text_words_count == 0 {
         return true;
     }
-    let link_words_count: AtomicUsize = AtomicUsize::new(0);
-    let links_count: AtomicUsize = AtomicUsize::new(0);
-    let text = node.find(Name("a").and(Text))
-        .map(|l| l.text()).collect::<Vec<String>>();
-
-    text.par_iter()
+    let mut link_words_count: usize = 0;
+    let mut links_count: usize = 0;
+    node.find(Name("a").and(Text))
+        .map(|l| l.text())
         .for_each(|link_text| {
-            link_words_count.fetch_add(count_words(link_text), Ordering::SeqCst);
-            links_count.fetch_add(1, Ordering::SeqCst);
+            link_words_count += count_words(link_text.as_str());
+            links_count+=1;
         });
-    let x = links_count.into_inner();
-    let y = link_words_count.into_inner();
-    (x * y) > text_words_count
+    (link_words_count * links_count) > text_words_count
 }
 
 #[inline]
