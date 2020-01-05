@@ -1,4 +1,6 @@
+use std::collections::BTreeMap;
 use std::vec::Vec;
+
 use select::document::Document;
 use select::predicate::{Name, Predicate, Text};
 use unicode_segmentation::UnicodeSegmentation;
@@ -7,7 +9,6 @@ use crate::extraction::predicate::ImageWithLink;
 use crate::extraction::stopwords::{count_stopwords, has_more_stopwords_than};
 
 use super::select::node::Node;
-use std::collections::BTreeMap;
 
 pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
     let mut top_node: Option<usize> = None;
@@ -15,31 +16,28 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
     let mut i: usize = 0;
     let mut nodes_with_text: BTreeMap<usize, String> = BTreeMap::new();
     let mut score_per_node: BTreeMap<usize, usize> = BTreeMap::new();
+    let mut nodes_with_text_count: usize = 0;
     for node in document.find(Name("p").or(Name("pre")).or(Name("td"))) {
         let node_text = node.text();
         let text_words_count = count_words(&node_text);
         if has_more_stopwords_than(&node_text, lang, 2) && !is_high_density_link(&node, text_words_count) {
             nodes_with_text.insert(node.index(), node_text);
+            nodes_with_text_count += 1;
         }
-
-        let nodes_with_text_count = nodes_with_text.len();
-
         let bottom_negative_scoring = nodes_with_text_count / 4;
-        for (node_index, text) in nodes_with_text.iter() {
-            let mut boost_score = if is_boostable(&node, lang) { 50.0 / starting_boost } else { 0.0 };
-
-            if nodes_with_text_count > 15 {
-                let booster: i32 = (bottom_negative_scoring + i - nodes_with_text_count) as i32;
-                if booster >= 0 {
-                    let x = i32::pow(booster, 2);
-                    if x > 40 {
-                        boost_score = 5.0;
-                    } else {
-                        boost_score = -1.0 * (x) as f32;
-                    }
+        let mut boost_score = if is_boostable(&node, lang) { 50.0 / starting_boost } else { 0.0 };
+        if nodes_with_text_count > 15 {
+            let booster: i32 = (bottom_negative_scoring + i - nodes_with_text_count) as i32;
+            if booster >= 0 {
+                let x = i32::pow(booster, 2);
+                if x > 40 {
+                    boost_score = 5.0;
+                } else {
+                    boost_score = -1.0 * (x) as f32;
                 }
             }
-
+        }
+        for (node_index, text) in nodes_with_text.iter() {
             let up_score = count_stopwords(text, lang) + (boost_score) as usize;
             let parent_node = document.nth(*node_index).unwrap().parent().unwrap();
 
@@ -95,7 +93,7 @@ fn is_high_density_link(node: &Node, text_words_count: usize) -> bool {
         .map(|l| l.text())
         .for_each(|link_text| {
             link_words_count += count_words(link_text.as_str());
-            links_count+=1;
+            links_count += 1;
         });
     (link_words_count * links_count) > text_words_count
 }
