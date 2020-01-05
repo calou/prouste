@@ -1,5 +1,4 @@
 use std::vec::Vec;
-use indexmap::IndexMap;
 use select::document::Document;
 use select::predicate::{Name, Predicate, Text};
 use unicode_segmentation::UnicodeSegmentation;
@@ -8,13 +7,14 @@ use crate::extraction::predicate::ImageWithLink;
 use crate::extraction::stopwords::{count_stopwords, has_more_stopwords_than};
 
 use super::select::node::Node;
+use std::collections::BTreeMap;
 
 pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a>> {
     let mut top_node: Option<usize> = None;
     let starting_boost: f32 = 1.0;
     let mut i: usize = 0;
-    let mut nodes_with_text: IndexMap<usize, String> = IndexMap::new();
-    let mut score_per_node: IndexMap<usize, usize> = IndexMap::new();
+    let mut nodes_with_text: BTreeMap<usize, String> = BTreeMap::new();
+    let mut score_per_node: BTreeMap<usize, usize> = BTreeMap::new();
     for node in document.find(Name("p").or(Name("pre")).or(Name("td"))) {
         let node_text = node.text();
         let text_words_count = count_words(&node_text);

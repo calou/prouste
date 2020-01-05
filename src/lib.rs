@@ -5,7 +5,6 @@ extern crate test;
 extern crate select;
 extern crate chardet;
 extern crate serde;
-extern crate indexmap;
 
 pub mod article;
 pub mod configuration;

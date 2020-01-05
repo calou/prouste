@@ -21,14 +21,14 @@ impl<'a> Predicate for ImageTag {
     fn matches(&self, node: &Node) -> bool {
         match node.name() {
             Some("link") => {
-                if let Some(b) = node.attr("rel") {
-                    return b == "image_src";
+                if let Some("image_src") = node.attr("rel") {
+                    return true;
                 }
                 false
             }
             Some("meta") => {
-                if let Some(value) = node.attr("property") {
-                    return value == "og:image";
+                if let Some("og:image") = node.attr("property") {
+                    return true;
                 }
                 if let Some(value) = node.attr("name") {
                     return value == "twitter:image" || value == "twitter:image:src";

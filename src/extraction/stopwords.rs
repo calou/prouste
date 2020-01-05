@@ -1,13 +1,14 @@
 extern crate stopwords;
 
-use indexmap::IndexMap;
+use std::collections::BTreeMap;
+
 use stopwords::{Language, NLTK, Stopwords};
 use unicode_segmentation::UnicodeSegmentation;
 
 lazy_static! {
 
-    static ref HASHMAP: IndexMap< &'static str, Vec<&'static str>> = {
-        let mut m = IndexMap::new();
+    static ref LANGUAGE_STOPWORDS_MAP: BTreeMap< &'static str, Vec<&'static str>> = {
+        let mut m = BTreeMap::new();
         m.insert("en", stopwords_from_language(Language::English));
         m.insert("fr", stopwords_from_language(Language::French));
         m.insert("de", stopwords_from_language(Language::German));
@@ -36,7 +37,7 @@ fn stopwords_from_language(lang: Language) -> Vec<&'static str> {
 }
 
 fn get_stopwords_from_language(lang: &str) -> Vec<&'static str> {
-    match HASHMAP.get(lang) {
+    match LANGUAGE_STOPWORDS_MAP.get(lang) {
         Some(sw) => sw.to_vec(),
         _ => Vec::default()
     }
