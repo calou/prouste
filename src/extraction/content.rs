@@ -14,14 +14,14 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
     let mut top_node: Option<usize> = None;
     let starting_boost: f32 = 1.0;
     let mut i: usize = 0;
-    let mut nodes_with_text: BTreeMap<usize, String> = BTreeMap::new();
+    let mut stopwords_per_node: BTreeMap<usize, usize> = BTreeMap::new();
     let mut score_per_node: BTreeMap<usize, usize> = BTreeMap::new();
     let mut nodes_with_text_count: usize = 0;
     for node in document.find(Name("p").or(Name("pre")).or(Name("td"))) {
         let node_text = node.text();
         let text_words_count = count_words(&node_text);
         if has_more_stopwords_than(&node_text, lang, 2) && !is_high_density_link(&node, text_words_count) {
-            nodes_with_text.insert(node.index(), node_text);
+            stopwords_per_node.insert(node.index(), count_stopwords(&node_text, &lang));
             nodes_with_text_count += 1;
         }
         let bottom_negative_scoring = nodes_with_text_count / 4;
@@ -37,16 +37,14 @@ pub fn get_top_node<'a>(document: &'a Document, lang: &'a str) -> Option<Node<'a
                 }
             }
         }
-        for (node_index, text) in nodes_with_text.iter() {
-            let up_score = count_stopwords(text, lang) + (boost_score) as usize;
+        for (node_index, stopwords) in stopwords_per_node.iter() {
+            let up_score = stopwords + (boost_score) as usize;
             let parent_node = document.nth(*node_index).unwrap().parent().unwrap();
 
-            let current_score = score_per_node.entry(parent_node.index()).or_insert(0);
-            *current_score += up_score;
+            *score_per_node.entry(parent_node.index()).or_insert(0) += up_score;
 
             if let Some(grandparent_node) = parent_node.parent() {
-                let node_score = score_per_node.entry(grandparent_node.index()).or_insert(0);
-                *node_score += up_score / 2;
+                *score_per_node.entry(grandparent_node.index()).or_insert(0) += up_score / 2;
             }
             i += 1;
         }
